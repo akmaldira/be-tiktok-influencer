@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    /* Language and Environment */
+    "target": "es2016",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    
+    /* Modules */
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "baseUrl": "./src",
+    "typeRoots": [
+      "./types",
+      "node_modules/@types",
+    ],
+    "resolveJsonModule": true,
+    
+    /* JavaScript Support */
+    "allowJs": true,
+
+    /* Emit */
+    "declaration": true,
+    "sourceMap": true,
+    "outDir": "./dist",
+    "noEmit": true,
+    "importHelpers": true,
+    
+    /* Interop Constraints */
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Type Checking */
+    "strict": true,
+    "strictPropertyInitialization": false,
+    
+    /* Completeness */
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.json", "public/*", ".env"],
+  "exclude": ["node_modules", "logs", ]
+}
