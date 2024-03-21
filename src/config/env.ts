@@ -13,6 +13,7 @@ const {
   DB_NAME,
   JWT_SECRET,
   DEBUG,
+  AI_API_KEY,
 } = process.env;
 
 if (!PORT) {
@@ -45,11 +46,16 @@ if (!JWT_SECRET) {
   throw new Error("JWT_SECRET is not defined");
 }
 
+if (!AI_API_KEY) {
+  throw new Error("AI_API_KEY is not defined");
+}
+
 export const appConfig = {
   NODE_ENV: NODE_ENV,
   PORT: Number(PORT),
   JWT_SECRET: JWT_SECRET,
   DEBUG: DEBUG === "true",
+  AI_API_KEY,
 };
 
 export const dbConfig = {

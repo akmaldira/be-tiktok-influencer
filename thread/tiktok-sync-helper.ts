@@ -1,7 +1,7 @@
 import axios, { AxiosHeaders, RawAxiosRequestHeaders } from "axios";
 import fs from "fs";
 import path from "path";
-import { Browser, Page } from "puppeteer";
+import { Browser, Page, TimeoutError } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import dataSource from "../src/database/data-source";
@@ -10,7 +10,10 @@ import TiktokHashtagEntity from "../src/database/entities/tiktok-hashtag.entity"
 import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
 import {
   CreatorDetailResponse,
+  GetCraetorStatsProps,
   GetCreatorDetailByVideoAuthorProps,
+  GetCreatorStatsResponse,
+  GetCreatorVideosResponse,
   GetHashtagFilterFromTiktokResponse,
   GetManyVideosByManyHashtagProps,
   GetPopularHashtagProps,
@@ -31,8 +34,11 @@ export class Logger {
     this.saveLog = saveLog;
     if (saveLog) {
       const today = new Date().toISOString().split("T")[0];
-      this.filePath =
-        filePath || path.resolve("sync-logs", `${workerName}-${today}.log`);
+      const folderPath = path.resolve("sync-logs", today);
+      this.filePath = filePath || path.join(folderPath, `${workerName}.log`);
+      if (!fs.existsSync(folderPath)) {
+        fs.mkdirSync(folderPath);
+      }
       this.logStream = fs.createWriteStream(this.filePath, { flags: "a" });
     }
   }
@@ -49,6 +55,10 @@ export class Logger {
       this.logStream.write(
         `[${this.workerName}] ${message || error.message}\n${error.stack}\n`,
       );
+    }
+    if (error instanceof TimeoutError || error.message == "no permission") {
+      console.error(`[${this.workerName}] ${message || error.message}`);
+      return;
     }
     console.error(
       `[${this.workerName}] ${message || error.message}\n${error.stack}`,
@@ -113,6 +123,9 @@ export default class TiktokSyncHelper {
     this.browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
     });
+    this.browser.on("disconnected", () => {
+      this.browser = undefined;
+    });
 
     return this.browser;
   }
@@ -139,13 +152,18 @@ export default class TiktokSyncHelper {
       );
       await page.reload();
 
-      const request = await page.waitForRequest((request) => {
-        return request
-          .url()
-          .includes(
-            "https://ads.tiktok.com/creative_radar_api/v1/popular_trend/creator/list",
-          );
-      });
+      const request = await page.waitForRequest(
+        (request) => {
+          return request
+            .url()
+            .includes(
+              "https://ads.tiktok.com/creative_radar_api/v1/popular_trend/creator/list",
+            );
+        },
+        {
+          timeout: 15000,
+        },
+      );
 
       const headers = request.headers();
       if (
@@ -270,7 +288,11 @@ export default class TiktokSyncHelper {
         }
       }
     }
-    return hashtagsList;
+    const distinctHashtagsList = hashtagsList.filter(
+      (v, i, a) => a.findIndex((t) => t.name === v.name) === i,
+    );
+
+    return distinctHashtagsList;
   }
 
   async getAllVideosByManyHashtag({
@@ -299,18 +321,24 @@ export default class TiktokSyncHelper {
           `https://ads.tiktok.com/business/creativecenter/hashtag/${hashtag}/pc/en?countryCode=${country.id}&period=7`,
         );
 
-        const videoList = await page.waitForResponse((response) => {
-          const url = response.url();
-          const status = response.status();
+        const videoList = await page.waitForResponse(
+          (response) => {
+            const url = response.url();
+            const status = response.status();
 
-          return (
-            url.includes("https://www.tiktok.com/api/recommend/embed_videos") &&
-            status === 200
-          );
-        });
-        const creatorData = await videoList.json();
+            return (
+              url.includes(
+                "https://www.tiktok.com/api/recommend/embed_videos",
+              ) && status === 200
+            );
+          },
+          {
+            timeout: 15000,
+          },
+        );
+        const videoListData = await videoList.json();
 
-        const authors = creatorData.items.map((video: any) => ({
+        const authors = videoListData.items.map((video: any) => ({
           uniqueId: video.author.uniqueId,
           country: country,
           hashtag: hashtag,
@@ -409,6 +437,98 @@ export default class TiktokSyncHelper {
       this.logger.error(
         error,
         `Error getting creator detail by video author ${author.uniqueId}. Max retries reached (${tryCount + 1}). Skipping...`,
+      );
+      return undefined;
+    }
+  }
+
+  async getCreatorStats({
+    creator,
+    tryCount = 0,
+  }: GetCraetorStatsProps): Promise<GetCreatorStatsResponse | undefined> {
+    const browser = await this.openBrowser();
+    try {
+      this.logger.log(`Getting creator videos @${creator.uniqueId}...`);
+      const page = await browser.newPage();
+      await page.setUserAgent(
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      );
+      await page.goto(`https://www.tiktok.com/@${creator.uniqueId}`);
+
+      const responseData = {
+        viewCount: 0,
+        commentCount: 0,
+        shareCount: 0,
+        collectCount: 0,
+      };
+      const tempCursor: string[] = [];
+      const maxDelayFirstData = 10000;
+      const startGetData = Date.now();
+      let hasReload = false;
+
+      await page.waitForResponse(
+        async (response) => {
+          const url = response.url();
+          const status = response.status();
+
+          if (
+            url.includes("https://www.tiktok.com/api/post/item_list") &&
+            status === 200
+          ) {
+            const resData: GetCreatorVideosResponse = await response.json();
+            if (!tempCursor.includes(resData.cursor)) {
+              if (resData) {
+                tempCursor.push(resData.cursor);
+                for (const item of resData.itemList) {
+                  if (!item.stats) continue;
+                  responseData.viewCount += item.stats.playCount;
+                  responseData.commentCount += item.stats.commentCount;
+                  responseData.shareCount += item.stats.shareCount;
+                  responseData.collectCount += item.stats.collectCount;
+                }
+              }
+            }
+            if (resData.hasMore === true) {
+              await page.evaluate(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+              });
+              return false;
+            }
+            return true;
+          }
+          const now = Date.now();
+          if (
+            now - startGetData > maxDelayFirstData &&
+            tempCursor.length === 0 &&
+            !hasReload
+          ) {
+            hasReload = true;
+            await page.reload();
+          }
+          return false;
+        },
+        {
+          timeout: 150000,
+        },
+      );
+
+      await this.closeBrowser();
+
+      return responseData;
+    } catch (error: any) {
+      if (tryCount < this.maxTryCount) {
+        this.logger.error(
+          error,
+          `Error getting creator videos ${creator.uniqueId}. Retry count ${tryCount + 1}. Retrying...`,
+        );
+        return this.getCreatorStats({
+          creator,
+          tryCount: tryCount + 1,
+        });
+      }
+      this.logger.error(
+        error,
+        `Error getting creator videos ${creator.uniqueId}. Max retries reached (${tryCount + 1}). Skipping...`,
       );
       return undefined;
     }

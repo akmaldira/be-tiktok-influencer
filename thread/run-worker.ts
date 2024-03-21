@@ -4,7 +4,7 @@ import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity"
 import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
 import { WorkerResponse } from "./types";
 
-const numOfCores = 5;
+const numOfCores = 4;
 function importWorker(path: string, options?: WorkerOptions) {
   const resolvedPath = require.resolve(path);
   return new Worker(resolvedPath, {

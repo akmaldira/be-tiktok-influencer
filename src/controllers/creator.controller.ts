@@ -14,6 +14,10 @@ export const getCreators = tryCatchController(
     );
 
     const getCreatorsQuery = CreatorEntity.createQueryBuilder("creator")
+      .addSelect(
+        "CAST(CAST(tc.like_count + tc.comment_count + tc.share_count as float) / CAST(tc.view_count as float) * 100 as decimal(10,2))",
+        "engagementRate",
+      )
       .where("creator.visibility = true")
       .leftJoinAndSelect("creator.country", "country")
       .leftJoinAndSelect("creator.industries", "industries")

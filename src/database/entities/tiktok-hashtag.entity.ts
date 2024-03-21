@@ -23,6 +23,9 @@ export default class TiktokHashtagEntity extends TrackedEntity {
   @Column({ type: "jsonb", nullable: true })
   trend: { time: number; value: number }[] | null;
 
+  @Column({ name: "update_count", type: "int", default: 0 })
+  updateCount: number;
+
   @ManyToOne(() => TiktokCountryEntity)
   @JoinColumn({ name: "country_code" })
   country: TiktokCountryEntity;

@@ -1,3 +1,4 @@
+import CreatorEntity from "../src/database/entities/creator.entity";
 import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity";
 import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
 
@@ -65,6 +66,12 @@ export type GetPopularHashtagProps = {
     sort_by: "popular";
   };
 };
+
+export type GetCraetorStatsProps = {
+  creator: CreatorEntity;
+  tryCount?: number;
+};
+
 export type GetPopularHashtagResponse = {
   list: PopularHashtag[];
   pagination:
@@ -126,4 +133,36 @@ export type CreatorStats = {
 export type CreatorDetailResponse = {
   user: CreatorDetail;
   stats: CreatorStats;
+};
+
+export type VideoStats = {
+  collectCount: number;
+  commentCount: number;
+  diggCount: number;
+  playCount: number;
+  shareCount: number;
+};
+
+export type VideoHashtag = {
+  hashtagName: string;
+  isCommerce: boolean;
+};
+
+export type CreatorVideo = {
+  author: CreatorDetail;
+  stats: VideoStats | null;
+  textExtra: VideoHashtag[];
+};
+
+export type GetCreatorVideosResponse = {
+  cursor: string;
+  hasMore: boolean;
+  itemList: CreatorVideo[];
+};
+
+export type GetCreatorStatsResponse = {
+  viewCount: number;
+  commentCount: number;
+  shareCount: number;
+  collectCount: number;
 };

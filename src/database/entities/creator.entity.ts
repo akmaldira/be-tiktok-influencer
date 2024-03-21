@@ -81,6 +81,30 @@ export default class CreatorEntity extends TrackedEntity {
   })
   viewCount: number | null;
 
+  @Column({
+    name: "comment_count",
+    type: "bigint",
+    nullable: true,
+  })
+  commentCount: number | null;
+
+  @Column({
+    name: "share_count",
+    type: "bigint",
+    nullable: true,
+  })
+  shareCount: number | null;
+
+  @Column({
+    name: "collect_count",
+    type: "bigint",
+    nullable: true,
+  })
+  collectCount: number | null;
+
+  @Column({ name: "update_count", type: "int", default: 0 })
+  updateCount: number;
+
   @ManyToOne(() => TiktokCountryEntity, {
     onUpdate: "CASCADE",
     onDelete: "CASCADE",

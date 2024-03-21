@@ -28,6 +28,8 @@ async function run({ workerName, country, industries }: RunWorkerProps) {
       },
       relations: ["creators"],
     });
+    const hashtagsEntity = await TiktokHashtagEntity.find();
+
     if (!industryEntity) {
       console.error(`Industry not found: ${industry.id}`);
       continue;
@@ -44,7 +46,19 @@ async function run({ workerName, country, industries }: RunWorkerProps) {
       },
     });
 
-    await TiktokHashtagEntity.upsert(hashtags, {
+    const hashtagsToSave = hashtags.map((h) => {
+      const hashtag = hashtagsEntity.find((he) => he.name === h.name);
+      if (hashtag) {
+        return {
+          ...hashtag,
+          ...h,
+          updateCount: hashtag.updateCount + 1,
+        };
+      }
+      return h;
+    });
+
+    await TiktokHashtagEntity.upsert(hashtagsToSave, {
       conflictPaths: ["name"],
     });
 
@@ -60,45 +74,53 @@ async function run({ workerName, country, industries }: RunWorkerProps) {
 
       if (
         !creatorDetail ||
-        !countryList.find((c) => c.id === author.country.id)
+        !countryList.find((c) => c.id === creatorDetail.user?.region)
       ) {
         continue;
       }
 
-      let creator = await CreatorEntity.findOne({
-        where: {
-          id: creatorDetail.user.id,
-        },
+      await dataSource.manager.transaction(async (manager) => {
+        let creator = await manager.findOne(CreatorEntity, {
+          where: {
+            id: creatorDetail.user.id,
+          },
+          lock: {
+            mode: "pessimistic_write",
+            onLocked: "skip_locked",
+          },
+        });
+        const socialMedia =
+          TiktokSyncHelper.getCreatorInfoFromUserDetail(creatorDetail);
+
+        if (!creator) {
+          creator = new CreatorEntity();
+          creator.id = creatorDetail.user.id;
+        } else {
+          creator.updateCount = creator.updateCount + 1;
+        }
+        creator.uniqueId = creatorDetail.user.uniqueId;
+        creator.nickName = creatorDetail.user.nickname;
+        creator.language = creatorDetail.user.language;
+        creator.avatar = creatorDetail.user.avatarThumb;
+        creator.private = creatorDetail.user.privateAccount;
+        creator.verified = creatorDetail.user.verified;
+        creator.visibility = true;
+        creator.description = creatorDetail.user.signature;
+        creator.bioLink = creatorDetail.user.bioLink?.link || null;
+        creator.instagram = socialMedia.instagram;
+        creator.phone = socialMedia.phone;
+        creator.email = socialMedia.email;
+        creator.followerCount = creatorDetail.stats.followerCount;
+        creator.likeCount = creatorDetail.stats.heartCount;
+        creator.videoCount = creatorDetail.stats.videoCount;
+        creator.country = {
+          id: creatorDetail.user.region,
+        } as TiktokCountryEntity;
+
+        await manager.save(CreatorEntity, creator);
+        industryEntity.creators.push(creator);
+        await manager.save(TiktokIndustryEntity, industryEntity);
       });
-      const socialMedia =
-        TiktokSyncHelper.getCreatorInfoFromUserDetail(creatorDetail);
-
-      if (!creator) {
-        creator = new CreatorEntity();
-        creator.id = creatorDetail.user.id;
-      }
-      creator.uniqueId = creatorDetail.user.uniqueId;
-      creator.nickName = creatorDetail.user.nickname;
-      creator.language = creatorDetail.user.language;
-      creator.avatar = creatorDetail.user.avatarThumb;
-      creator.private = creatorDetail.user.privateAccount;
-      creator.verified = creatorDetail.user.verified;
-      creator.visibility = true;
-      creator.description = creatorDetail.user.signature;
-      creator.bioLink = creatorDetail.user.bioLink?.link || null;
-      creator.instagram = socialMedia.instagram;
-      creator.phone = socialMedia.phone;
-      creator.email = socialMedia.email;
-      creator.followerCount = creatorDetail.stats.followerCount;
-      creator.likeCount = creatorDetail.stats.heartCount;
-      creator.videoCount = creatorDetail.stats.videoCount;
-      creator.country = {
-        id: country.id,
-      } as TiktokCountryEntity;
-
-      await creator.save();
-      industryEntity.creators.push(creator);
-      await industryEntity.save();
     }
   }
 }
