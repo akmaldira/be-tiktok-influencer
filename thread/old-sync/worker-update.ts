@@ -1,6 +1,6 @@
 import { parentPort } from "worker_threads";
-import dataSource from "../src/database/data-source";
-import CreatorEntity from "../src/database/entities/creator.entity";
+import dataSource from "../../src/database/data-source";
+import CreatorEntity from "../../src/database/entities/creator.entity";
 import TiktokSyncHelper from "./tiktok-sync-helper";
 
 async function run({

@@ -1,6 +1,6 @@
-import CreatorEntity from "../src/database/entities/creator.entity";
-import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity";
-import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
+import CreatorEntity from "../../src/database/entities/creator.entity";
+import TiktokCountryEntity from "../../src/database/entities/tiktok-country.entity";
+import TiktokIndustryEntity from "../../src/database/entities/tiktok-industry.entity";
 
 export type CountryInfo = {
   id: string;
@@ -47,6 +47,14 @@ export type GetManyVideosByManyHashtagProps = {
     id: string;
     value: string;
   };
+};
+
+export type GetManyVideosByHashtagNewProps = Omit<
+  GetManyVideosByManyHashtagProps,
+  "hashtags"
+> & {
+  hashtag: string;
+  tryCount?: number;
 };
 
 export type VideoAuthor = {

@@ -1,9 +1,9 @@
 import { parentPort } from "worker_threads";
-import dataSource from "../src/database/data-source";
-import CreatorEntity from "../src/database/entities/creator.entity";
-import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity";
-import TiktokHashtagEntity from "../src/database/entities/tiktok-hashtag.entity";
-import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
+import dataSource from "../../src/database/data-source";
+import CreatorEntity from "../../src/database/entities/creator.entity";
+import TiktokCountryEntity from "../../src/database/entities/tiktok-country.entity";
+import TiktokHashtagEntity from "../../src/database/entities/tiktok-hashtag.entity";
+import TiktokIndustryEntity from "../../src/database/entities/tiktok-industry.entity";
 import TiktokSyncHelper from "./tiktok-sync-helper";
 import { RunWorkerProps, WorkerMessage } from "./types";
 

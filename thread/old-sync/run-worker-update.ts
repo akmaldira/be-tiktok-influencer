@@ -1,6 +1,6 @@
 import { Worker, WorkerOptions } from "worker_threads";
-import dataSource from "../src/database/data-source";
-import CreatorEntity from "../src/database/entities/creator.entity";
+import dataSource from "../../src/database/data-source";
+import CreatorEntity from "../../src/database/entities/creator.entity";
 
 const numOfCores = 4;
 function importWorker(path: string, options?: WorkerOptions) {

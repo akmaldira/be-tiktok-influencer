@@ -5,9 +5,11 @@ import {
   JoinTable,
   ManyToMany,
   ManyToOne,
+  OneToMany,
   PrimaryColumn,
   Relation,
 } from "typeorm";
+import CreatorVideoEntity from "./creator-video.entity";
 import TiktokCountryEntity from "./tiktok-country.entity";
 import TiktokIndustryEntity from "./tiktok-industry.entity";
 import TrackedEntity from "./tracked.entity";
@@ -22,6 +24,9 @@ export default class CreatorEntity extends TrackedEntity {
 
   @Column({ name: "nick_name", type: "varchar", length: 100, nullable: true })
   nickName: string | null;
+
+  @Column({ name: "tt_seller", type: "boolean", nullable: true })
+  ttSeller: boolean | null;
 
   @Column({ type: "varchar", length: 100, nullable: true })
   language: string | null;
@@ -112,9 +117,7 @@ export default class CreatorEntity extends TrackedEntity {
   @JoinColumn({ name: "country_code" })
   country: Relation<TiktokCountryEntity>;
 
-  @ManyToMany(() => TiktokIndustryEntity, (industry) => industry.creators, {
-    cascade: true,
-  })
+  @ManyToMany(() => TiktokIndustryEntity, (industry) => industry.creators)
   @JoinTable({
     name: "tbl_creators_industries",
     joinColumn: {
@@ -127,4 +130,7 @@ export default class CreatorEntity extends TrackedEntity {
     },
   })
   industries: Relation<TiktokIndustryEntity[]>;
+
+  @OneToMany(() => CreatorVideoEntity, (video) => video.creator)
+  videos: CreatorVideoEntity[];
 }

@@ -4,10 +4,10 @@ import path from "path";
 import { Browser, Page, TimeoutError } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import dataSource from "../src/database/data-source";
-import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity";
-import TiktokHashtagEntity from "../src/database/entities/tiktok-hashtag.entity";
-import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
+import dataSource from "../../src/database/data-source";
+import TiktokCountryEntity from "../../src/database/entities/tiktok-country.entity";
+import TiktokHashtagEntity from "../../src/database/entities/tiktok-hashtag.entity";
+import TiktokIndustryEntity from "../../src/database/entities/tiktok-industry.entity";
 import {
   CreatorDetailResponse,
   GetCraetorStatsProps,
@@ -15,6 +15,7 @@ import {
   GetCreatorStatsResponse,
   GetCreatorVideosResponse,
   GetHashtagFilterFromTiktokResponse,
+  GetManyVideosByHashtagNewProps,
   GetManyVideosByManyHashtagProps,
   GetPopularHashtagProps,
   GetPopularHashtagResponse,
@@ -98,14 +99,14 @@ export default class TiktokSyncHelper {
     anonymousUserId,
     timeStamp,
     userSign,
-  }: SetDefaultHeadersProps) {
+  }: SetDefaultHeadersProps): any {
     this.defaultHeaders["Anonymous-User-Id"] = anonymousUserId;
     this.defaultHeaders["Timestamp"] = timeStamp;
     this.defaultHeaders["User-Sign"] = userSign;
     return this.defaultHeaders;
   }
 
-  public resetDefaultHeaders() {
+  public resetDefaultHeaders(): any {
     this.defaultHeaders["Anonymous-User-Id"] = undefined;
     this.defaultHeaders["Timestamp"] = undefined;
     this.defaultHeaders["User-Sign"] = undefined;
@@ -396,6 +397,37 @@ export default class TiktokSyncHelper {
     return distinctCreatorsTempData;
   }
 
+  async getVideosByHashtagNew({
+    hashtag,
+    country,
+    industry,
+    tryCount = 0,
+  }: GetManyVideosByHashtagNewProps & { tryCount?: number }): Promise<any> {
+    const browser = await this.openBrowser();
+    try {
+      const page = await browser.newPage();
+      await page.goto(`https://www.tiktok.com/tag/${hashtag}`);
+    } catch (error) {
+      if (tryCount < this.maxTryCount) {
+        this.logger.error(
+          error,
+          `Error getting video list by hashtag. Retry count ${tryCount + 1}. Retrying...`,
+        );
+        return this.getVideosByHashtagNew({
+          hashtag,
+          country,
+          industry,
+          tryCount: tryCount + 1,
+        });
+      }
+      this.logger.error(
+        error,
+        `Error getting video list by hashtag. Max retries reached (${tryCount + 1}). Skipping...`,
+      );
+      return [];
+    }
+  }
+
   async getCreatorDetailByVideoAuthor({
     author,
     tryCount = 0,
@@ -454,6 +486,7 @@ export default class TiktokSyncHelper {
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
       );
       await page.goto(`https://www.tiktok.com/@${creator.uniqueId}`);
+      await page.reload();
 
       const responseData = {
         viewCount: 0,

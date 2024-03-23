@@ -1,7 +1,7 @@
 import { Worker, WorkerOptions } from "worker_threads";
-import dataSource from "../src/database/data-source";
-import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity";
-import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
+import dataSource from "../../src/database/data-source";
+import TiktokCountryEntity from "../../src/database/entities/tiktok-country.entity";
+import TiktokIndustryEntity from "../../src/database/entities/tiktok-industry.entity";
 import { WorkerResponse } from "./types";
 
 const numOfCores = 4;

@@ -37,6 +37,6 @@
     /* Completeness */
     "skipLibCheck": true
   },
-  "include": ["src/**/*.ts", "src/**/*.json", "public/*", ".env"],
+  "include": ["src/**/*.ts", "src/**/*.json", "public/*", ".env", "thread/*.ts", "thread/old-sync/run-worker.ts", "thread/old-sync/run-worker-update.ts", "thread/old-sync/backup-worker.ts", "thread/old-sync/tiktok-sync-helper.ts", "thread/old-sync/worker-update.ts", "thread/old-sync/worker.ts", "thread/old-sync/types.ts", "thread/old-sync-v2/index.ts", "thread/old-sync-v2/sync.ts", "thread/old-sync-v2/worker-get-data.ts", "thread/old-sync-v2/worker-update-data.ts"],
   "exclude": ["node_modules", "logs", ]
 }

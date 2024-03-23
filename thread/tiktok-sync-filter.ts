@@ -1,5 +1,5 @@
-import TiktokSyncHelper from "./tiktok-sync-helper";
+import TiktokHelper from "./tiktok-helper";
 
 (async () => {
-  await TiktokSyncHelper.saveHashtagFilterToDb();
+  await TiktokHelper.saveHashtagFilterToDb();
 })();
