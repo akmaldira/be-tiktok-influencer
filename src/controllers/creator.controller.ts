@@ -14,14 +14,6 @@ export const getCreators = tryCatchController(
     );
 
     const getCreatorsQuery = CreatorEntity.createQueryBuilder("creator")
-      .addSelect(
-        `case 
-          when creator.like_count + creator.comment_count + creator.share_count = 0 then 0
-          when creator.view_count = 0 then 0
-          else CAST(CAST(creator.like_count + creator.comment_count + creator.share_count as float) / CAST(creator.view_count as float) * 100 as decimal(10,2))
-        end`,
-        "engagementRate",
-      )
       .where("creator.visibility = true")
       .leftJoinAndSelect("creator.country", "country")
       .leftJoinAndSelect("creator.industries", "industries")
@@ -51,8 +43,30 @@ export const getCreators = tryCatchController(
     }
 
     const [creators, total] = await getCreatorsQuery.getManyAndCount();
+    const creatorsWithEngagementRate = creators.map((creator) => {
+      const viewCount = parseInt((creator.viewCount as string | null) || "0");
+      const likeCount = parseInt((creator.likeCount as string | null) || "0");
+      const commentCount = parseInt(
+        (creator.commentCount as string | null) || "0",
+      );
+      const shareCount = parseInt((creator.shareCount as string | null) || "0");
+      let engagementRate = 0;
+      if (
+        !isNaN(viewCount) &&
+        !isNaN(likeCount) &&
+        !isNaN(commentCount) &&
+        !isNaN(shareCount)
+      ) {
+        engagementRate =
+          ((likeCount + commentCount + shareCount) / viewCount) * 100;
+      }
+      return {
+        ...creator,
+        engagementRate,
+      };
+    });
 
-    const response = BaseResponse.success(creators, {
+    const response = BaseResponse.success(creatorsWithEngagementRate, {
       page: pagination?.page || 1,
       perPage: pagination?.perPage || 10,
       total: total,
