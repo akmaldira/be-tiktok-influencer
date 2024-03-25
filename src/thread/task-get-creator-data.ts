@@ -1,4 +1,3 @@
-import fs from "fs";
 import { Page } from "puppeteer";
 import { Cluster } from "puppeteer-cluster";
 import puppeteer from "puppeteer-extra";
@@ -11,7 +10,7 @@ import {
   TiktokVideosByHashtagResponse,
 } from "./tiktok-types";
 
-function extractCreatorDataFromHTML(html: string, uniqueId: string) {
+function extractCreatorDataFromHTML(html: string) {
   const match = html.match(
     /<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"([^>]+)>([^<]+)<\/script>/,
   );
@@ -21,8 +20,6 @@ function extractCreatorDataFromHTML(html: string, uniqueId: string) {
     }
     throw new Error(`Cannot find creator data in HTML`);
   }
-  // For Debugging
-  fs.writeFileSync(`${uniqueId}.html`, match[2]);
 
   const jsonData = JSON.parse(match[2]) as any;
   const creatorJsonData = jsonData["__DEFAULT_SCOPE__"]["webapp.user-detail"];
@@ -60,7 +57,7 @@ async function getCreatorData({
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
 
-  const [creatorDataResponse, latestVideos] = await Promise.all([
+  const [creatorDataResponse] = await Promise.all([
     page.waitForResponse(async (res) => {
       const url = res.url();
       const status = res.status();
@@ -69,20 +66,25 @@ async function getCreatorData({
         status === 200
       );
     }),
-    page.waitForResponse((res) => {
-      const url = res.url();
-      const status = res.status();
-      return (
-        url.includes(`https://www.tiktok.com/api/post/item_list`) &&
-        status === 200
-      );
-    }),
+
     page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`),
   ]);
   const html = await creatorDataResponse.text();
-  const creator = extractCreatorDataFromHTML(html, data.video.author.uniqueId);
+  const creator = extractCreatorDataFromHTML(html);
 
-  const videos: TiktokVideosByHashtagResponse = await latestVideos.json();
+  const latestVideos = await page.waitForResponse((res) => {
+    const url = res.url();
+    const status = res.status();
+    return (
+      url.includes(`https://www.tiktok.com/api/post/item_list`) &&
+      status === 200
+    );
+  });
+  const videos: TiktokVideosByHashtagResponse = await latestVideos
+    .json()
+    .catch(async (err) => {
+      console.log(await latestVideos.text());
+    });
   const videoList = extractCreatorVideosFromJSON(videos);
   console.log(
     `getCreatorData @${data.video.author.uniqueId} complete, got ${videoList.length} videos`,
