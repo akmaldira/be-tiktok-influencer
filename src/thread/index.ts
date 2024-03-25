@@ -282,11 +282,13 @@ process.on("SIGUSR1", async (signal) => {
   await sendTelegramMessage(
     `Process scraping data SIGUSR1 with signal ${signal}`,
   );
+  process.exit(1);
 });
 process.on("SIGUSR2", async (signal) => {
   await sendTelegramMessage(
     `Process scraping data SIGUSR2 with signal ${signal}`,
   );
+  process.exit(1);
 });
 
 // catches uncaught exceptions
