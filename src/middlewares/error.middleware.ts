@@ -59,7 +59,7 @@ export default function errorMiddleware(
   if (appConfig.DEBUG) {
     console.error(err);
   }
-
+  console.log(err);
   if (err instanceof Error) {
     const response = BaseResponse.error({ message: err.message });
     return res.status(500).json(response);

@@ -16,6 +16,14 @@ async function getVideoByHashtag({
   page: Page;
   data: { hashtag: PopularHashtag };
 }) {
+  if (page.isClosed()) {
+    console.log("Page is closed");
+    page = await page.browser().newPage();
+  }
+  if (!page.browser().connected) {
+    throw new Error("Browser is disconnected");
+  }
+
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
@@ -23,14 +31,19 @@ async function getVideoByHashtag({
     `https://www.tiktok.com/tag/${data.hashtag.hashtag_name}?lang=en,`,
   );
 
-  const videoListResponse = await page.waitForResponse(async (res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
-      url.includes("https://www.tiktok.com/api/challenge/item_list") &&
-      status === 200
-    );
-  });
+  const videoListResponse = await page.waitForResponse(
+    async (res) => {
+      const url = res.url();
+      const status = res.status();
+      return (
+        url.includes("https://www.tiktok.com/api/challenge/item_list") &&
+        status === 200
+      );
+    },
+    {
+      timeout: 15000,
+    },
+  );
 
   const response: TiktokVideosByHashtagResponse =
     await videoListResponse.json();
@@ -51,9 +64,15 @@ async function getVideoByHashtag({
     hashtag: data.hashtag,
   })) as TiktokVideoTimelineWithHashtag[];
 
-  return videoListWithHashtag;
+  console.log(
+    `getVideoByHashtag #${data.hashtag.hashtag_name} complete, got ${videoListWithHashtag.length} videos`,
+  );
+
+  globalVideo.push(...videoListWithHashtag);
+  await page.close();
 }
 
+let globalVideo: TiktokVideoTimelineWithHashtag[] = [];
 export default async function taskGetVideoByHashtag(
   hashtags: PopularHashtag[],
   clusterOptions: {
@@ -64,60 +83,51 @@ export default async function taskGetVideoByHashtag(
   } = {},
   maxRetryEachHashtag: number = 3,
 ) {
+  globalVideo = [];
   puppeteer.use(StealthPlugin());
-  const cluster: Cluster<
-    { hashtag: PopularHashtag },
-    TiktokVideoTimelineWithHashtag[]
-  > = await Cluster.launch({
-    concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 6,
-    puppeteer,
-    puppeteerOptions: {
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    },
-    retryLimit: 3,
-    retryDelay: 1000,
-    timeout: 60000,
-    ...clusterOptions,
-  });
+  const cluster: Cluster<{ hashtag: PopularHashtag }, void> =
+    await Cluster.launch({
+      concurrency: Cluster.CONCURRENCY_PAGE,
+      maxConcurrency: 6,
+      puppeteer,
+      puppeteerOptions: {
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-features=site-per-process",
+        ],
+      },
+      retryLimit: maxRetryEachHashtag,
+      retryDelay: 1000,
+      timeout: 60000,
+      ...clusterOptions,
+    });
 
-  const videoListByHashtag: TiktokVideoTimelineWithHashtag[] = [];
-
-  let tryCount = 0;
-  for (let i = 0; i < hashtags.length; i++) {
-    try {
-      const videoByHashtagResponse = await cluster.execute(
-        { hashtag: hashtags[i] },
-        getVideoByHashtag,
-      );
-      console.log(
-        `getVideoByHashtag #${hashtags[i].hashtag_name} complete, got ${videoByHashtagResponse.length} videos`,
-      );
-      videoListByHashtag.push(...videoByHashtagResponse);
-      tryCount = 0;
-    } catch (error: any) {
-      if (tryCount < maxRetryEachHashtag - 1) {
+  cluster.on(
+    "taskerror",
+    (err, data: { hashtag: PopularHashtag }, retry: boolean) => {
+      if (retry) {
         console.log(
-          `getVideoByHashtag #${hashtags[i].hashtag_name} error (${tryCount + 1}) reason: ${error.message}. Retrying...`,
+          `getVideoByHashtag #${data.hashtag.hashtag_name} error reason: ${err.message}. Retrying...`,
         );
-        tryCount++;
-        i--;
-        continue;
-      } else {
-        console.log(
-          `getVideoByHashtag #${hashtags[i].hashtag_name} error (${tryCount + 1}) reason: ${error.message}. Skipping...`,
-        );
-        console.log(error);
-        tryCount = 0;
+        return;
       }
-    }
+      console.log(
+        `getVideoByHashtag #${data.hashtag.hashtag_name} error reason: ${err.message}. Skipping...`,
+      );
+    },
+  );
+
+  for (let i = 0; i < hashtags.length; i++) {
+    cluster.queue({ hashtag: hashtags[i] }, getVideoByHashtag);
   }
 
   await cluster.idle();
   await cluster.close();
 
-  const distinctVideos = videoListByHashtag.filter((v, i, a) => {
+  const distinctVideos = globalVideo.filter((v, i, a) => {
     return a.findIndex((t) => t.id === v.id) === i;
   });
+
   return distinctVideos;
 }

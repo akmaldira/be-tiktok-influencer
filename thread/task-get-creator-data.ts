@@ -16,7 +16,7 @@ function extractCreatorDataFromHTML(html: string) {
   );
   if (!match) {
     if (html.includes("Please wait...")) {
-      console.log(html);
+      throw new Error(`Website is loading, please wait...`);
     }
     throw new Error(`Cannot find creator data in HTML`);
   }
@@ -44,39 +44,68 @@ async function getCreatorData({
   page: Page;
   data: { video: TiktokVideoTimelineWithHashtag };
 }) {
+  if (page.isClosed()) {
+    console.log("Page is closed");
+    page = await page.browser().newPage();
+  }
+  if (!page.browser().connected) {
+    throw new Error("Browser is disconnected");
+  }
+
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
-  page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`);
 
-  const creatorDataResponse = await page.waitForResponse(async (res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
-      url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
-      status === 200
-    );
-  });
+  await page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`);
+
+  const creatorDataResponse = await page.waitForResponse(
+    async (res) => {
+      const url = res.url();
+      const status = res.status();
+      return (
+        url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
+        status === 200
+      );
+    },
+    {
+      timeout: 15000,
+    },
+  );
   const html = await creatorDataResponse.text();
   const creator = extractCreatorDataFromHTML(html);
 
-  const latestVideos = await page.waitForResponse((res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
-      url.includes(`https://www.tiktok.com/api/post/item_list`) &&
-      status === 200
-    );
-  });
+  const latestVideos = await page.waitForResponse(
+    (res) => {
+      const url = res.url();
+      const status = res.status();
+      return (
+        url.includes(`https://www.tiktok.com/api/post/item_list`) &&
+        status === 200
+      );
+    },
+    {
+      timeout: 20000,
+    },
+  );
   const videos: TiktokVideosByHashtagResponse = await latestVideos.json();
   const videoList = extractCreatorVideosFromJSON(videos);
-
-  return {
-    creator: creator.user,
+  console.log(
+    `getCreatorData @${data.video.author.uniqueId} complete, got ${videoList.length} videos`,
+  );
+  globalCreatorData.push({
+    creator: creator,
     videos: videoList,
-  };
+  });
+  await page.close();
 }
 
+let globalCreatorData: {
+  creator: {
+    user: TiktokCreatorDetail;
+    stats: TiktokVideoStats;
+  };
+  videos: TiktokVideoTimelineByHashtag[];
+}[] = [];
 export default async function taskGetCreatorData(
   videoByHashtags: TiktokVideoTimelineWithHashtag[],
   clusterOptions: {
@@ -87,63 +116,57 @@ export default async function taskGetCreatorData(
   } = {},
   maxRetryEachVideo: number = 3,
 ) {
+  globalCreatorData = [];
   puppeteer.use(StealthPlugin());
-  const cluster: Cluster<
-    { video: TiktokVideoTimelineWithHashtag },
-    {
-      creator: TiktokCreatorDetail;
-      videos: TiktokVideoTimelineByHashtag[];
-    }
-  > = await Cluster.launch({
-    concurrency: Cluster.CONCURRENCY_CONTEXT,
-    maxConcurrency: 6,
-    puppeteer,
-    puppeteerOptions: {
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    },
-    retryLimit: 3,
-    retryDelay: 1000,
-    timeout: 60000,
-    ...clusterOptions,
-  });
+  const cluster: Cluster<{ video: TiktokVideoTimelineWithHashtag }, void> =
+    await Cluster.launch({
+      concurrency: Cluster.CONCURRENCY_PAGE,
+      maxConcurrency: 6,
+      puppeteer,
+      puppeteerOptions: {
+        args: [
+          "--no-sandbox",
+          "--disable-setuid-sandbox",
+          "--disable-features=site-per-process",
+        ],
+      },
+      retryLimit: maxRetryEachVideo,
+      retryDelay: 3000,
+      timeout: 60000,
+      ...clusterOptions,
+    });
 
-  const creatorData: {
-    creator: TiktokCreatorDetail;
-    videos: TiktokVideoTimelineByHashtag[];
-  }[] = [];
+  cluster.on(
+    "taskerror",
+    async (
+      err: any,
+      data: { video: TiktokVideoTimelineWithHashtag },
+      retry: boolean,
+    ) => {
+      if (retry) {
+        if (err.message == "Website is loading, please wait...") {
+          console.log(
+            `getCreatorData @${data.video.author.uniqueId} error reason: Website is loading. Retrying...`,
+          );
 
-  let tryCount = 0;
-  for (let i = 0; i < videoByHashtags.length; i++) {
-    try {
-      const creator = await cluster.execute(
-        { video: videoByHashtags[i] },
-        getCreatorData,
-      );
-      console.log(
-        `getCreatorData @${videoByHashtags[i].author.uniqueId} complete, got ${creator.videos.length} videos`,
-      );
-      creatorData.push(creator);
-      tryCount = 0;
-    } catch (error: any) {
-      if (tryCount < maxRetryEachVideo - 1) {
+          return;
+        }
         console.log(
-          `getCreatorData @${videoByHashtags[i].author.uniqueId} error (${tryCount + 1}) reason: ${error.message}. Retrying...`,
+          `getCreatorData @${data.video.author.uniqueId} error reason: ${err.message}. Retrying...`,
         );
-        tryCount++;
-        i--;
-        continue;
-      } else {
-        console.log(
-          `getCreatorData @${videoByHashtags[i].author.uniqueId} error (${tryCount + 1}) reason: ${error.message}. Skipping...`,
-        );
-        console.log(error);
-        tryCount = 0;
+        return;
       }
-    }
+      console.log(
+        `getCreatorData @${data.video.author.uniqueId} error reason: ${err.message}. Skipping...`,
+      );
+    },
+  );
+  for (let i = 0; i < videoByHashtags.length; i++) {
+    cluster.queue({ video: videoByHashtags[i] }, getCreatorData);
   }
 
   await cluster.idle();
   await cluster.close();
 
-  return creatorData;
+  return globalCreatorData;
 }
