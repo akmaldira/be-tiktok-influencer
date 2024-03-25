@@ -73,14 +73,11 @@ async function getCreatorData({
       url.includes(`https://www.tiktok.com/api/post/item_list`) &&
       status === 200
     ) {
-      await response
+      latestVideos = await response
         .json()
-        .then((data) => {
-          latestVideos = data;
-        })
-        .catch((_err) => {
-          // console.log(`Error parsing JSON data`, err);
-        });
+        .catch((err) =>
+          console.log(`Error while parsing JSON on video: ${err}`),
+        );
     } else if (
       url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
       status === 200
