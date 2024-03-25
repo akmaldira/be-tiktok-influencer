@@ -1,3 +1,4 @@
+import fs from "fs";
 import { Page } from "puppeteer";
 import { Cluster } from "puppeteer-cluster";
 import puppeteer from "puppeteer-extra";
@@ -10,7 +11,7 @@ import {
   TiktokVideosByHashtagResponse,
 } from "./tiktok-types";
 
-function extractCreatorDataFromHTML(html: string) {
+function extractCreatorDataFromHTML(html: string, uniqueId: string) {
   const match = html.match(
     /<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"([^>]+)>([^<]+)<\/script>/,
   );
@@ -20,6 +21,9 @@ function extractCreatorDataFromHTML(html: string) {
     }
     throw new Error(`Cannot find creator data in HTML`);
   }
+  // For Debugging
+  fs.writeFileSync(`${uniqueId}.html`, match[2]);
+
   const jsonData = JSON.parse(match[2]) as any;
   const creatorJsonData = jsonData["__DEFAULT_SCOPE__"]["webapp.user-detail"];
   const creatorDetail = creatorJsonData.userInfo as {
@@ -76,7 +80,7 @@ async function getCreatorData({
     page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`),
   ]);
   const html = await creatorDataResponse.text();
-  const creator = extractCreatorDataFromHTML(html);
+  const creator = extractCreatorDataFromHTML(html, data.video.author.uniqueId);
 
   const videos: TiktokVideosByHashtagResponse = await latestVideos.json();
   const videoList = extractCreatorVideosFromJSON(videos);
