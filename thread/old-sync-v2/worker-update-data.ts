@@ -3,12 +3,12 @@ import dataSource from "../../src/database/data-source";
 import CreatorVideoEntity from "../../src/database/entities/creator-video.entity";
 import CreatorEntity from "../../src/database/entities/creator.entity";
 import TiktokCountryEntity from "../../src/database/entities/tiktok-country.entity";
-import TiktokHelper from "../tiktok-helper";
+import TiktokHelper from "../../src/thread/tiktok-helper";
 import {
   TiktokCreatorDetail,
   TiktokCreatorVideo,
   TiktokVideoTimelineByHashtag,
-} from "../tiktok-types";
+} from "../../src/thread/tiktok-types";
 
 async function updateCreatorData(creator: TiktokCreatorDetail) {
   if (!dataSource.isInitialized) {

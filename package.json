@@ -12,8 +12,8 @@
     "migration:generate": "yarn typeorm migration:generate -o ./migrations/migration -d ./src/database/data-source.ts",
     "migration:run": "yarn typeorm migration:run -d ./src/database/data-source.ts",
     "migration:revert": "yarn typeorm migration:revert -d ./src/database/data-source.ts",
-    "sync:tiktok-filter": "ts-node -r tsconfig-paths/register ./thread/tiktok-sync-filter.ts",
-    "sync:tiktok-data": "ts-node -r tsconfig-paths/register ./thread/index.ts"
+    "sync:filter": "yarn build && node dist/thread/tiktok-sync-filter.js",
+    "sync:data": "yarn build && node dist/thread/index.js"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

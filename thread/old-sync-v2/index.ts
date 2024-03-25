@@ -9,7 +9,7 @@ import CreatorEntity from "../../src/database/entities/creator.entity";
 import TiktokCountryEntity from "../../src/database/entities/tiktok-country.entity";
 import TiktokHashtagEntity from "../../src/database/entities/tiktok-hashtag.entity";
 import TiktokIndustryEntity from "../../src/database/entities/tiktok-industry.entity";
-import TiktokHelper from "../tiktok-helper";
+import TiktokHelper from "../../src/thread/tiktok-helper";
 import {
   PopularHashtag,
   TiktokCreatorDetail,
@@ -17,7 +17,7 @@ import {
   TiktokPopularHashtagResponse,
   TiktokVideoTimelineByHashtag,
   TiktokVideosByHashtagResponse,
-} from "../tiktok-types";
+} from "../../src/thread/tiktok-types";
 
 async function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));

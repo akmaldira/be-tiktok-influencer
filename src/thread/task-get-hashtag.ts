@@ -3,8 +3,8 @@ import { Page } from "puppeteer";
 import { Cluster } from "puppeteer-cluster";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity";
-import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
+import TiktokCountryEntity from "../database/entities/tiktok-country.entity";
+import TiktokIndustryEntity from "../database/entities/tiktok-industry.entity";
 import { PopularHashtag, TiktokPopularHashtagResponse } from "./tiktok-types";
 
 async function getPopularHashtags({

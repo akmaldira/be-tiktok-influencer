@@ -4,10 +4,10 @@ import path from "path";
 import { Browser, TimeoutError } from "puppeteer";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import dataSource from "../src/database/data-source";
-import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity";
-import TiktokHashtagEntity from "../src/database/entities/tiktok-hashtag.entity";
-import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
+import dataSource from "../database/data-source";
+import TiktokCountryEntity from "../database/entities/tiktok-country.entity";
+import TiktokHashtagEntity from "../database/entities/tiktok-hashtag.entity";
+import TiktokIndustryEntity from "../database/entities/tiktok-industry.entity";
 import {
   TiktokCreatorDetail,
   TiktokCreatorDetailAndVideosProps,

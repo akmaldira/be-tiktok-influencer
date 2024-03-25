@@ -58,35 +58,25 @@ async function getCreatorData({
 
   await page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`);
 
-  const creatorDataResponse = await page.waitForResponse(
-    async (res) => {
-      const url = res.url();
-      const status = res.status();
-      return (
-        url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
-        status === 200
-      );
-    },
-    {
-      timeout: 15000,
-    },
-  );
+  const creatorDataResponse = await page.waitForResponse(async (res) => {
+    const url = res.url();
+    const status = res.status();
+    return (
+      url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
+      status === 200
+    );
+  });
   const html = await creatorDataResponse.text();
   const creator = extractCreatorDataFromHTML(html);
 
-  const latestVideos = await page.waitForResponse(
-    (res) => {
-      const url = res.url();
-      const status = res.status();
-      return (
-        url.includes(`https://www.tiktok.com/api/post/item_list`) &&
-        status === 200
-      );
-    },
-    {
-      timeout: 20000,
-    },
-  );
+  const latestVideos = await page.waitForResponse((res) => {
+    const url = res.url();
+    const status = res.status();
+    return (
+      url.includes(`https://www.tiktok.com/api/post/item_list`) &&
+      status === 200
+    );
+  });
   const videos: TiktokVideosByHashtagResponse = await latestVideos.json();
   const videoList = extractCreatorVideosFromJSON(videos);
   console.log(

@@ -1,9 +1,9 @@
-import CreatorVideoEntity from "database/entities/creator-video.entity";
-import CreatorEntity from "database/entities/creator.entity";
-import TiktokHashtagEntity from "database/entities/tiktok-hashtag.entity";
-import dataSource from "../src/database/data-source";
-import TiktokCountryEntity from "../src/database/entities/tiktok-country.entity";
-import TiktokIndustryEntity from "../src/database/entities/tiktok-industry.entity";
+import dataSource from "../database/data-source";
+import CreatorVideoEntity from "../database/entities/creator-video.entity";
+import CreatorEntity from "../database/entities/creator.entity";
+import TiktokCountryEntity from "../database/entities/tiktok-country.entity";
+import TiktokHashtagEntity from "../database/entities/tiktok-hashtag.entity";
+import TiktokIndustryEntity from "../database/entities/tiktok-industry.entity";
 import taskGetCreatorData from "./task-get-creator-data";
 import taskGetHashtags from "./task-get-hashtag";
 import taskGetVideoByHashtag from "./task-get-hashtag-video";
@@ -263,7 +263,9 @@ process.on("exit", async (code) => {
     console.log("exit with error");
     await sendTelegramMessage(`Process scraping data error with code: ${code}`);
   }
-  process.exit(code);
+  setTimeout(() => {
+    process.exit(code);
+  }, 1000);
 });
 
 // catches ctrl+c event

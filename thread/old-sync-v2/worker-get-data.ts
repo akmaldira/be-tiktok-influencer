@@ -4,8 +4,8 @@ import CreatorEntity from "../../src/database/entities/creator.entity";
 import TiktokCountryEntity from "../../src/database/entities/tiktok-country.entity";
 import TiktokHashtagEntity from "../../src/database/entities/tiktok-hashtag.entity";
 import TiktokIndustryEntity from "../../src/database/entities/tiktok-industry.entity";
-import TiktokHelper from "../tiktok-helper";
-import { TiktokVideoTimelineByHashtag } from "../tiktok-types";
+import TiktokHelper from "../../src/thread/tiktok-helper";
+import { TiktokVideoTimelineByHashtag } from "../../src/thread/tiktok-types";
 
 function importWorker(path: string, options?: WorkerOptions) {
   const resolvedPath = require.resolve(path);
