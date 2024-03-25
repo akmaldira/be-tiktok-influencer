@@ -1,4 +1,5 @@
 import CreatorEntity from "database/entities/creator.entity";
+import TiktokCountryEntity from "database/entities/tiktok-country.entity";
 import TiktokIndustryEntity from "database/entities/tiktok-industry.entity";
 import { Request, Response } from "express";
 import { searchCreatorQuerySpec } from "payload/request/creator.request";
@@ -77,41 +78,17 @@ export const getCreators = tryCatchController(
 
 export const getFilterCreator = tryCatchController(
   async (req: Request, res: Response) => {
-    const followersCount = [
-      {
-        id: 1000,
-        value: "> 1k",
-      },
-      {
-        id: 10000,
-        value: "> 10k",
-      },
-      {
-        id: 100000,
-        value: "> 100k",
-      },
-      {
-        id: 1000000,
-        value: "> 1M",
-      },
-      {
-        id: 10000000,
-        value: "> 10M",
-      },
-      {
-        id: 100000000,
-        value: "> 100M",
-      },
-    ];
+    const country = await TiktokCountryEntity.find({
+      order: { value: "ASC" },
+    });
 
-    const country = await CreatorEntity.find();
-
-    const industry = await TiktokIndustryEntity.find();
+    const industry = await TiktokIndustryEntity.find({
+      order: { value: "ASC" },
+    });
 
     const response = BaseResponse.success({
       country,
       industry,
-      followersCount,
     });
 
     return res.json(response);
