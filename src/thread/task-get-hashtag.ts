@@ -31,13 +31,18 @@ async function getPopularHashtags({
   );
 
   const [request] = await Promise.all([
-    page.waitForRequest((req) => {
-      return req
-        .url()
-        .includes(
-          "https://ads.tiktok.com/creative_radar_api/v1/popular_trend/creator/list",
-        );
-    }),
+    page.waitForRequest(
+      (req) => {
+        return req
+          .url()
+          .includes(
+            "https://ads.tiktok.com/creative_radar_api/v1/popular_trend/creator/list",
+          );
+      },
+      {
+        timeout: 15000,
+      },
+    ),
     page.goto(
       `https://ads.tiktok.com/business/creativecenter/inspiration/popular/creator/pc/en`,
     ),

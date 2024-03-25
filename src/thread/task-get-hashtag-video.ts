@@ -32,14 +32,19 @@ async function getVideoByHashtag({
     `https://www.tiktok.com/tag/${data.hashtag.hashtag_name}?lang=en,`,
   );
 
-  const videoListResponse = await page.waitForResponse(async (res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
-      url.includes("https://www.tiktok.com/api/challenge/item_list") &&
-      status === 200
-    );
-  });
+  const videoListResponse = await page.waitForResponse(
+    async (res) => {
+      const url = res.url();
+      const status = res.status();
+      return (
+        url.includes("https://www.tiktok.com/api/challenge/item_list") &&
+        status === 200
+      );
+    },
+    {
+      timeout: 15000,
+    },
+  );
 
   const response: TiktokVideosByHashtagResponse =
     await videoListResponse.json();

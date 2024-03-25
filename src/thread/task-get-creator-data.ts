@@ -161,7 +161,6 @@ export default async function taskGetCreatorData(
           console.log(
             `getCreatorData @${data.video.author.uniqueId} error reason: Website is loading. Retrying...`,
           );
-
           return;
         }
         console.log(

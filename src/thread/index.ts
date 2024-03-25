@@ -66,13 +66,14 @@ async function upsertCreatorData(
     };
     videos: TiktokVideoTimelineByHashtag[];
   }[],
+  industry: TiktokIndustryEntity,
 ) {
   if (!dataSource.isInitialized) {
     await dataSource.initialize();
   }
 
   const creatorsFromDB = await CreatorEntity.find({
-    relations: ["videos"],
+    relations: ["videos", "industries"],
   });
 
   const distinctCreators = data.filter(
@@ -145,6 +146,7 @@ async function upsertCreatorData(
         shareCount: totalShare,
         collectCount: totalCollect,
         country: { id: user.region } as TiktokCountryEntity,
+        industries: [],
       });
 
       if (creatorFromDB) {
@@ -153,6 +155,10 @@ async function upsertCreatorData(
         rawCreator.email = creatorFromDB.email || rawCreator.email;
         rawCreator.phone = creatorFromDB.phone || rawCreator.phone;
         rawCreator.instagram = creatorFromDB.instagram || rawCreator.instagram;
+        rawCreator.industries =
+          creatorFromDB.industries.length > 0
+            ? [...creatorFromDB.industries, industry]
+            : [industry];
       }
 
       await rawCreator.save();
@@ -231,6 +237,7 @@ async function main(countryCode: string, industryId: string) {
       `Get videos by hashtags complete, got ${videoByHashtags.length} videos in ${durationVideoByHashtags}s`,
     );
 
+    // FOR TESTING
     // const videoByHashtag = fs.readFileSync(
     //   path.resolve(__dirname, "dummy-video-by-hashtag.json"),
     //   "utf-8",
@@ -251,7 +258,7 @@ async function main(countryCode: string, industryId: string) {
       `Get creator data complete, got ${creatorData.length} creators in ${durationCreatorData}s`,
     );
 
-    await upsertCreatorData(creatorData);
+    await upsertCreatorData(creatorData, industry);
     console.log("Upsert creator data complete");
     await sendTelegramMessage("Upsert creator data complete");
 
@@ -315,4 +322,16 @@ process.on("uncaughtException", async (error) => {
   await main("ID", "13000000000");
   await main("ID", "14000000000");
   await main("ID", "15000000000");
+  await main("ID", "17000000000");
+  await main("ID", "18000000000");
+  await main("ID", "19000000000");
+  await main("ID", "21000000000");
+  await main("ID", "22000000000");
+  await main("ID", "23000000000");
+  await main("ID", "24000000000");
+  await main("ID", "25000000000");
+  await main("ID", "26000000000");
+  await main("ID", "27000000000");
+  await main("ID", "28000000000");
+  await main("ID", "29000000000");
 })();
