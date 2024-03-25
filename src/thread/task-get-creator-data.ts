@@ -137,6 +137,7 @@ export default async function taskGetCreatorData(
       maxConcurrency: 3,
       puppeteer,
       puppeteerOptions: {
+        headless: false,
         args: [
           "--no-sandbox",
           "--disable-setuid-sandbox",

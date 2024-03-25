@@ -155,14 +155,12 @@ async function upsertCreatorData(
         rawCreator.email = creatorFromDB.email || rawCreator.email;
         rawCreator.phone = creatorFromDB.phone || rawCreator.phone;
         rawCreator.instagram = creatorFromDB.instagram || rawCreator.instagram;
-        rawCreator.industries =
-          creatorFromDB.industries.length > 0
-            ? [...creatorFromDB.industries, industry]
-            : [industry];
       }
 
       await rawCreator.save();
       await CreatorVideoEntity.upsert(videosToInsert, ["id"]);
+      industry.creators.push(rawCreator);
+      await industry.save();
     } catch (error: any) {
       console.log(
         `Error upserting creator data @${user.uniqueId}, reason: ${error.message}`,
@@ -197,8 +195,9 @@ async function main(countryCode: string, industryId: string) {
     const country = await TiktokCountryEntity.findOneByOrFail({
       id: countryCode,
     });
-    const industry = await TiktokIndustryEntity.findOneByOrFail({
-      id: industryId,
+    const industry = await TiktokIndustryEntity.findOneOrFail({
+      where: { id: industryId },
+      relations: ["creators"],
     });
 
     const industries = [industry];
@@ -316,7 +315,8 @@ process.on("uncaughtException", async (error) => {
 });
 
 (async () => {
-  await main("ID", "10000000000");
+  // Yang dikomen ini untuk sudah dijalankan
+  // await main("ID", "10000000000");
   await main("ID", "11000000000");
   await main("ID", "12000000000");
   await main("ID", "13000000000");
