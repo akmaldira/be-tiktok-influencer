@@ -16,10 +16,10 @@ export const getCreators = tryCatchController(
     const getCreatorsQuery = CreatorEntity.createQueryBuilder("creator")
       .addSelect(
         `case 
-          when tc.like_count + tc.comment_count + tc.share_count = 0 then 0
-          when tc.view_count = 0 then 0
-          else CAST(CAST(tc.like_count + tc.comment_count + tc.share_count as float) / CAST(tc.view_count as float) * 100 as decimal(10,2))
-        end as engagement`,
+          when creator.like_count + creator.comment_count + creator.share_count = 0 then 0
+          when creator.view_count = 0 then 0
+          else CAST(CAST(creator.like_count + creator.comment_count + creator.share_count as float) / CAST(creator.view_count as float) * 100 as decimal(10,2))
+        end`,
         "engagementRate",
       )
       .where("creator.visibility = true")
