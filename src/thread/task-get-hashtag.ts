@@ -7,6 +7,10 @@ import TiktokCountryEntity from "../database/entities/tiktok-country.entity";
 import TiktokIndustryEntity from "../database/entities/tiktok-industry.entity";
 import { PopularHashtag, TiktokPopularHashtagResponse } from "./tiktok-types";
 
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function getPopularHashtags({
   page,
   data: { country, industry },
@@ -25,17 +29,19 @@ async function getPopularHashtags({
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
-  await page.goto(
-    `https://ads.tiktok.com/business/creativecenter/inspiration/popular/creator/pc/en`,
-  );
 
-  const request = await page.waitForRequest((req) => {
-    return req
-      .url()
-      .includes(
-        "https://ads.tiktok.com/creative_radar_api/v1/popular_trend/creator/list",
-      );
-  });
+  const [request] = await Promise.all([
+    page.waitForRequest((req) => {
+      return req
+        .url()
+        .includes(
+          "https://ads.tiktok.com/creative_radar_api/v1/popular_trend/creator/list",
+        );
+    }),
+    page.goto(
+      `https://ads.tiktok.com/business/creativecenter/inspiration/popular/creator/pc/en`,
+    ),
+  ]);
 
   const headers = request.headers();
   if (
@@ -94,8 +100,10 @@ async function fetchPopularHashtag({
   );
 
   const resData = await response.data;
+  if (resData && resData.msg == "no permission") {
+    throw new Error(`getPopularHashtags error reason: no permission`);
+  }
   if (!resData || resData.code != 0) {
-    console.log(resData);
     throw new Error(`getPopularHashtags error reason: invalid response data`);
   }
 
@@ -128,7 +136,7 @@ export default async function taskGetHashtags(
     void
   > = await Cluster.launch({
     concurrency: Cluster.CONCURRENCY_PAGE,
-    maxConcurrency: 6,
+    maxConcurrency: 3,
     puppeteer,
     puppeteerOptions: {
       args: [
@@ -138,18 +146,14 @@ export default async function taskGetHashtags(
       ],
     },
     retryLimit: maxRetryEachIndustry,
-    retryDelay: 1000,
+    retryDelay: 5000,
     timeout: 60000,
     ...clusterOptions,
   });
 
-  cluster.on("error", (err) => {
-    console.log(`getPopularHashtags error reason: ${err.message}`);
-  });
-
   cluster.on(
     "taskerror",
-    (
+    async (
       err,
       data: { country: TiktokCountryEntity; industry: TiktokIndustryEntity },
       retry: boolean,
@@ -157,6 +161,17 @@ export default async function taskGetHashtags(
       if (retry) {
         console.log(
           `getPopularHashtags industry: ${data.industry.value} error reason: ${err.message}. Retrying...`,
+        );
+        return;
+      }
+      if (err.message == "getPopularHashtags error reason: no permission") {
+        console.log(
+          `getPopularHashtags industry: ${data.industry.value} error reason: no permission. Wait 5s...`,
+        );
+        await sleep(5000);
+        cluster.queue(
+          { country: data.country, industry: data.industry },
+          getPopularHashtags,
         );
         return;
       }

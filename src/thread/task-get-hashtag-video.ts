@@ -27,18 +27,20 @@ async function getVideoByHashtag({
   await page.setUserAgent(
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
-  await page.goto(
-    `https://www.tiktok.com/tag/${data.hashtag.hashtag_name}?lang=en,`,
-  );
 
-  const videoListResponse = await page.waitForResponse(async (res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
-      url.includes("https://www.tiktok.com/api/challenge/item_list") &&
-      status === 200
-    );
-  });
+  const [videoListResponse] = await Promise.all([
+    page.waitForResponse(async (res) => {
+      const url = res.url();
+      const status = res.status();
+      return (
+        url.includes("https://www.tiktok.com/api/challenge/item_list") &&
+        status === 200
+      );
+    }),
+    page.goto(
+      `https://www.tiktok.com/tag/${data.hashtag.hashtag_name}?lang=en,`,
+    ),
+  ]);
 
   const response: TiktokVideosByHashtagResponse =
     await videoListResponse.json();
@@ -83,7 +85,7 @@ export default async function taskGetVideoByHashtag(
   const cluster: Cluster<{ hashtag: PopularHashtag }, void> =
     await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_PAGE,
-      maxConcurrency: 6,
+      maxConcurrency: 3,
       puppeteer,
       puppeteerOptions: {
         args: [
@@ -93,7 +95,7 @@ export default async function taskGetVideoByHashtag(
         ],
       },
       retryLimit: maxRetryEachHashtag,
-      retryDelay: 1000,
+      retryDelay: 5000,
       timeout: 60000,
       ...clusterOptions,
     });

@@ -56,27 +56,28 @@ async function getCreatorData({
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
 
-  await page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`);
-
-  const creatorDataResponse = await page.waitForResponse(async (res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
-      url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
-      status === 200
-    );
-  });
+  const [creatorDataResponse, latestVideos] = await Promise.all([
+    page.waitForResponse(async (res) => {
+      const url = res.url();
+      const status = res.status();
+      return (
+        url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
+        status === 200
+      );
+    }),
+    page.waitForResponse((res) => {
+      const url = res.url();
+      const status = res.status();
+      return (
+        url.includes(`https://www.tiktok.com/api/post/item_list`) &&
+        status === 200
+      );
+    }),
+    page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`),
+  ]);
   const html = await creatorDataResponse.text();
   const creator = extractCreatorDataFromHTML(html);
 
-  const latestVideos = await page.waitForResponse((res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
-      url.includes(`https://www.tiktok.com/api/post/item_list`) &&
-      status === 200
-    );
-  });
   const videos: TiktokVideosByHashtagResponse = await latestVideos.json();
   const videoList = extractCreatorVideosFromJSON(videos);
   console.log(
@@ -111,7 +112,7 @@ export default async function taskGetCreatorData(
   const cluster: Cluster<{ video: TiktokVideoTimelineWithHashtag }, void> =
     await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_PAGE,
-      maxConcurrency: 6,
+      maxConcurrency: 3,
       puppeteer,
       puppeteerOptions: {
         args: [
@@ -121,7 +122,7 @@ export default async function taskGetCreatorData(
         ],
       },
       retryLimit: maxRetryEachVideo,
-      retryDelay: 3000,
+      retryDelay: 5000,
       timeout: 60000,
       ...clusterOptions,
     });
