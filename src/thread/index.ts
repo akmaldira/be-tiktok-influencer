@@ -270,7 +270,7 @@ process.on("exit", async (code) => {
 
 // catches ctrl+c event
 process.on("SIGINT", async (signal) => {
-  console.log(`exit with signal ${signal}`);
+  console.log(`Error with signal ${signal}`);
   await sendTelegramMessage(
     `Process scraping data SIGINT with signal ${signal}`,
   );
@@ -278,7 +278,7 @@ process.on("SIGINT", async (signal) => {
 
 // catches "kill pid" (for example: nodemon restart)
 process.on("SIGUSR1", async (signal) => {
-  console.log(`exit with signal ${signal}`);
+  console.log(`Error with signal ${signal}`);
   await sendTelegramMessage(
     `Process scraping data SIGUSR1 with signal ${signal}`,
   );
@@ -291,7 +291,7 @@ process.on("SIGUSR2", async (signal) => {
 
 // catches uncaught exceptions
 process.on("uncaughtException", async (error) => {
-  console.log(`exit with error ${error}`);
+  console.log(`Uncaught Exception error ${error}`);
   await sendTelegramMessage(
     `Process scraping data uncaughtException with error ${error}`,
   );

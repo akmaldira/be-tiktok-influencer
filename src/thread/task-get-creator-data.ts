@@ -57,7 +57,7 @@ async function getCreatorData({
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
 
-  const [creatorDataResponse] = await Promise.all([
+  const [creatorDataResponse, latestVideos] = await Promise.all([
     page.waitForResponse(async (res) => {
       const url = res.url();
       const status = res.status();
@@ -66,25 +66,22 @@ async function getCreatorData({
         status === 200
       );
     }),
-
-    page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`),
+    page.waitForResponse((res) => {
+      const url = res.url();
+      const status = res.status();
+      return (
+        url.includes(`https://www.tiktok.com/api/post/item_list`) &&
+        status === 200
+      );
+    }),
+    page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`, {
+      waitUntil: "domcontentloaded",
+    }),
   ]);
   const html = await creatorDataResponse.text();
   const creator = extractCreatorDataFromHTML(html);
 
-  const latestVideos = await page.waitForResponse((res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
-      url.includes(`https://www.tiktok.com/api/post/item_list`) &&
-      status === 200
-    );
-  });
-  const videos: TiktokVideosByHashtagResponse = await latestVideos
-    .json()
-    .catch(async (err) => {
-      console.log(await latestVideos.text());
-    });
+  const videos: TiktokVideosByHashtagResponse = await latestVideos.json();
   const videoList = extractCreatorVideosFromJSON(videos);
   console.log(
     `getCreatorData @${data.video.author.uniqueId} complete, got ${videoList.length} videos`,

@@ -28,19 +28,18 @@ async function getVideoByHashtag({
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
 
-  const [videoListResponse] = await Promise.all([
-    page.waitForResponse(async (res) => {
-      const url = res.url();
-      const status = res.status();
-      return (
-        url.includes("https://www.tiktok.com/api/challenge/item_list") &&
-        status === 200
-      );
-    }),
-    page.goto(
-      `https://www.tiktok.com/tag/${data.hashtag.hashtag_name}?lang=en,`,
-    ),
-  ]);
+  await page.goto(
+    `https://www.tiktok.com/tag/${data.hashtag.hashtag_name}?lang=en,`,
+  );
+
+  const videoListResponse = await page.waitForResponse(async (res) => {
+    const url = res.url();
+    const status = res.status();
+    return (
+      url.includes("https://www.tiktok.com/api/challenge/item_list") &&
+      status === 200
+    );
+  });
 
   const response: TiktokVideosByHashtagResponse =
     await videoListResponse.json();
