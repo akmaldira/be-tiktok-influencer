@@ -1,4 +1,4 @@
-import { HTTPResponse, Page } from "puppeteer";
+import { Page } from "puppeteer";
 import { Cluster } from "puppeteer-cluster";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
@@ -58,8 +58,13 @@ async function getCreatorData({
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
 
-  let latestVideos: HTTPResponse | undefined;
-  let creatorDataResponse: HTTPResponse | undefined;
+  let latestVideos: TiktokVideosByHashtagResponse | undefined;
+  let creatorDataResponse:
+    | {
+        user: TiktokCreatorDetail;
+        stats: TiktokVideoStats;
+      }
+    | undefined;
   page.on("response", async (response) => {
     const url = response.url();
     const status = response.status();
@@ -68,12 +73,20 @@ async function getCreatorData({
       url.includes(`https://www.tiktok.com/api/post/item_list`) &&
       status === 200
     ) {
-      latestVideos = response;
+      await response
+        .json()
+        .then((data) => {
+          latestVideos = data;
+        })
+        .catch((_err) => {
+          // console.log(`Error parsing JSON data`, err);
+        });
     } else if (
       url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
       status === 200
     ) {
-      creatorDataResponse = response;
+      const html = await response.text();
+      creatorDataResponse = extractCreatorDataFromHTML(html);
     }
   });
 
@@ -89,14 +102,8 @@ async function getCreatorData({
     throw new Error(`Cannot find creator data`);
   }
 
-  const html = await creatorDataResponse.text();
-  const creator = extractCreatorDataFromHTML(html);
-  const videos: TiktokVideosByHashtagResponse = await latestVideos
-    .json()
-    .catch((err) => {
-      console.log("getCreatorData on videos Error parsing JSON data");
-      console.error(err);
-    });
+  const creator = creatorDataResponse;
+  const videos: TiktokVideosByHashtagResponse = latestVideos;
   const videoList = extractCreatorVideosFromJSON(videos);
   console.log(
     `getCreatorData @${data.video.author.uniqueId} complete, got ${videoList.length} videos`,
