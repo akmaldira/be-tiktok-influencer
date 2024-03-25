@@ -1,4 +1,4 @@
-import { Page } from "puppeteer";
+import { HTTPResponse, Page } from "puppeteer";
 import { Cluster } from "puppeteer-cluster";
 import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
@@ -58,32 +58,39 @@ async function getCreatorData({
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
 
-  const [creatorDataResponse] = await Promise.all([
-    page.waitForResponse(async (res) => {
-      const url = res.url();
-      const status = res.status();
-      return (
-        url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
-        status === 200
-      );
-    }),
-    ,
-    page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`, {
-      waitUntil: "domcontentloaded",
-    }),
-  ]);
-  const html = await creatorDataResponse.text();
-  const creator = extractCreatorDataFromHTML(html);
+  let latestVideos: HTTPResponse | undefined;
+  let creatorDataResponse: HTTPResponse | undefined;
+  page.on("response", async (response) => {
+    const url = response.url();
+    const status = response.status();
 
-  const latestVideos = await page.waitForResponse((res) => {
-    const url = res.url();
-    const status = res.status();
-    return (
+    if (
       url.includes(`https://www.tiktok.com/api/post/item_list`) &&
       status === 200
-    );
+    ) {
+      latestVideos = response;
+    } else if (
+      url.includes(`https://www.tiktok.com/@${data.video.author.uniqueId}`) &&
+      status === 200
+    ) {
+      creatorDataResponse = response;
+    }
   });
 
+  await page.goto(`https://www.tiktok.com/@${data.video.author.uniqueId}`, {
+    waitUntil: "networkidle0",
+  });
+
+  if (!latestVideos) {
+    throw new Error(`Cannot find video data`);
+  }
+
+  if (!creatorDataResponse) {
+    throw new Error(`Cannot find creator data`);
+  }
+
+  const html = await creatorDataResponse.text();
+  const creator = extractCreatorDataFromHTML(html);
   const videos: TiktokVideosByHashtagResponse = await latestVideos
     .json()
     .catch((err) => {
