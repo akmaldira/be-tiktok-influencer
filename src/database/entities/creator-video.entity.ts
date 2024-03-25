@@ -1,4 +1,11 @@
-import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  PrimaryColumn,
+  Relation,
+} from "typeorm";
 import CreatorEntity from "./creator.entity";
 import TrackedEntity from "./tracked.entity";
 
@@ -48,5 +55,5 @@ export default class CreatorVideoEntity extends TrackedEntity {
 
   @ManyToOne(() => CreatorEntity, { nullable: false })
   @JoinColumn({ name: "creator_id" })
-  creator: CreatorEntity;
+  creator: Relation<CreatorEntity>;
 }

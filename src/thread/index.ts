@@ -274,6 +274,7 @@ process.on("SIGINT", async (signal) => {
   await sendTelegramMessage(
     `Process scraping data SIGINT with signal ${signal}`,
   );
+  process.exit(1);
 });
 
 // catches "kill pid" (for example: nodemon restart)

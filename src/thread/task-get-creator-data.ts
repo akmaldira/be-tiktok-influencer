@@ -21,7 +21,14 @@ function extractCreatorDataFromHTML(html: string) {
     throw new Error(`Cannot find creator data in HTML`);
   }
 
-  const jsonData = JSON.parse(match[2]) as any;
+  let jsonData: any;
+  try {
+    jsonData = JSON.parse(match[2]) as any;
+  } catch (error) {
+    console.log(
+      "getCreatorData on getting creator data error parsing JSON data",
+    );
+  }
   const creatorJsonData = jsonData["__DEFAULT_SCOPE__"]["webapp.user-detail"];
   const creatorDetail = creatorJsonData.userInfo as {
     user: TiktokCreatorDetail;
@@ -81,7 +88,11 @@ async function getCreatorData({
   const html = await creatorDataResponse.text();
   const creator = extractCreatorDataFromHTML(html);
 
-  const videos: TiktokVideosByHashtagResponse = await latestVideos.json();
+  const videos: TiktokVideosByHashtagResponse = await latestVideos
+    .json()
+    .catch((err) => {
+      console.log("getCreatorData on videos Error parsing JSON data");
+    });
   const videoList = extractCreatorVideosFromJSON(videos);
   console.log(
     `getCreatorData @${data.video.author.uniqueId} complete, got ${videoList.length} videos`,
