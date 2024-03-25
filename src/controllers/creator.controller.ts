@@ -104,29 +104,9 @@ export const getFilterCreator = tryCatchController(
       },
     ];
 
-    const country = await CreatorEntity.createQueryBuilder("creator")
-      .select("country.id", "id")
-      .addSelect("country.value", "value")
-      .leftJoin("creator.country", "country")
-      .where("creator.visibility = true")
-      .groupBy("country.id")
-      .addGroupBy("country.value")
-      .getRawMany();
+    const country = await CreatorEntity.find();
 
-    const industry = await TiktokIndustryEntity.find({
-      relations: ["creators"],
-    }).then((industries) =>
-      industries
-        .map((industry) => {
-          if (industry.creators.length > 0) {
-            return {
-              id: industry.id,
-              value: industry.value,
-            };
-          }
-        })
-        .filter((industry) => industry),
-    );
+    const industry = await TiktokIndustryEntity.find();
 
     const response = BaseResponse.success({
       country,
