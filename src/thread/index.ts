@@ -1,5 +1,3 @@
-import fs from "fs";
-import path from "path";
 import dataSource from "../database/data-source";
 import CreatorVideoEntity from "../database/entities/creator-video.entity";
 import CreatorEntity from "../database/entities/creator.entity";
@@ -7,6 +5,8 @@ import TiktokCountryEntity from "../database/entities/tiktok-country.entity";
 import TiktokHashtagEntity from "../database/entities/tiktok-hashtag.entity";
 import TiktokIndustryEntity from "../database/entities/tiktok-industry.entity";
 import taskGetCreatorData from "./task-get-creator-data";
+import taskGetHashtags from "./task-get-hashtag";
+import taskGetVideoByHashtag from "./task-get-hashtag-video";
 import TiktokHelper from "./tiktok-helper";
 import {
   PopularHashtag,
@@ -195,48 +195,48 @@ async function main(countryCode: string, industryId: string) {
       id: industryId,
     });
 
-    // const industries = [industry];
+    const industries = [industry];
 
-    // const industrieString = industries.map((i) => i.value).join(", ");
-    // await sendTelegramMessage(
-    //   `Start scraping data for ${country.value} in [${industrieString}] industries`,
-    // );
-
-    // const startHashtagTask = Date.now();
-    // const hashtags = await taskGetHashtags(country, industries);
-    // const endHashtagTask = Date.now();
-    // const durationHashtagTask = Math.floor(
-    //   (endHashtagTask - startHashtagTask) / 1000,
-    // );
-
-    // console.log(
-    //   `Get hashtags complete, got ${hashtags.length} hashtags in ${durationHashtagTask}s`,
-    // );
-    // await sendTelegramMessage(
-    //   `Get hashtags complete, got ${hashtags.length} hashtags in ${durationHashtagTask}s`,
-    // );
-    // await upsertPopularHashtags(hashtags);
-    // await sendTelegramMessage("Upsert popular hashtags complete");
-
-    // const startVideoByHashtags = Date.now();
-    // const videoByHashtags = await taskGetVideoByHashtag(hashtags);
-    // const endVideoByHashtags = Date.now();
-    // const durationVideoByHashtags = Math.floor(
-    //   (endVideoByHashtags - startVideoByHashtags) / 1000,
-    // );
-    // console.log(
-    //   `Get videos by hashtags complete, got ${videoByHashtags.length} videos in ${durationVideoByHashtags}s`,
-    // );
-    // await sendTelegramMessage(
-    //   `Get videos by hashtags complete, got ${videoByHashtags.length} videos in ${durationVideoByHashtags}s`,
-    // );
-
-    const videoByHashtag = fs.readFileSync(
-      path.resolve(__dirname, "dummy-video-by-hashtag.json"),
-      "utf-8",
+    const industrieString = industries.map((i) => i.value).join(", ");
+    await sendTelegramMessage(
+      `Start scraping data for ${country.value} in [${industrieString}] industries`,
     );
 
-    const videoByHashtags = [JSON.parse(videoByHashtag)];
+    const startHashtagTask = Date.now();
+    const hashtags = await taskGetHashtags(country, industries);
+    const endHashtagTask = Date.now();
+    const durationHashtagTask = Math.floor(
+      (endHashtagTask - startHashtagTask) / 1000,
+    );
+
+    console.log(
+      `Get hashtags complete, got ${hashtags.length} hashtags in ${durationHashtagTask}s`,
+    );
+    await sendTelegramMessage(
+      `Get hashtags complete, got ${hashtags.length} hashtags in ${durationHashtagTask}s`,
+    );
+    await upsertPopularHashtags(hashtags);
+    await sendTelegramMessage("Upsert popular hashtags complete");
+
+    const startVideoByHashtags = Date.now();
+    const videoByHashtags = await taskGetVideoByHashtag(hashtags);
+    const endVideoByHashtags = Date.now();
+    const durationVideoByHashtags = Math.floor(
+      (endVideoByHashtags - startVideoByHashtags) / 1000,
+    );
+    console.log(
+      `Get videos by hashtags complete, got ${videoByHashtags.length} videos in ${durationVideoByHashtags}s`,
+    );
+    await sendTelegramMessage(
+      `Get videos by hashtags complete, got ${videoByHashtags.length} videos in ${durationVideoByHashtags}s`,
+    );
+
+    // const videoByHashtag = fs.readFileSync(
+    //   path.resolve(__dirname, "dummy-video-by-hashtag.json"),
+    //   "utf-8",
+    // );
+
+    // const videoByHashtags = [JSON.parse(videoByHashtag)];
 
     const startCreatorData = Date.now();
     const creatorData = await taskGetCreatorData(videoByHashtags);
