@@ -1,3 +1,5 @@
+import dataSource from "database/data-source";
+import CreatorView from "database/entities/creator-view.entity";
 import CreatorEntity from "database/entities/creator.entity";
 import TiktokCountryEntity from "database/entities/tiktok-country.entity";
 import TiktokIndustryEntity from "database/entities/tiktok-industry.entity";
@@ -20,26 +22,28 @@ export const getCreators = tryCatchController(
       category,
     } = parse(searchCreatorQuerySpec, req.query);
 
-    const getCreatorsQuery = CreatorEntity.createQueryBuilder("creator")
+    const getCreatorsQuery = dataSource.manager
+      .createQueryBuilder(CreatorView, "creator")
       .where("creator.visibility = true")
       .leftJoinAndSelect("creator.country", "country")
-      .leftJoinAndSelect("creator.industries", "industries")
       .orderBy("creator.followerCount", "DESC");
 
     if (pagination) {
       getCreatorsQuery
-        .take(pagination.perPage)
-        .skip(pagination.page ? (pagination.page - 1) * pagination.perPage : 0);
+        .limit(pagination.perPage)
+        .offset(
+          pagination.page ? (pagination.page - 1) * pagination.perPage : 0,
+        );
     } else {
       getCreatorsQuery.take(10);
     }
 
     if (country) {
-      getCreatorsQuery.andWhere("country.id = :country", { country });
+      getCreatorsQuery.andWhere("country_id = :country", { country });
     }
 
     if (industry) {
-      getCreatorsQuery.andWhere("industries.id = :industry", { industry });
+      getCreatorsQuery.andWhere(`industries @> '[{ "id": "${industry}" }]'`);
     }
 
     if (followers) {
@@ -49,49 +53,29 @@ export const getCreators = tryCatchController(
       );
     }
 
-    // if (engagementRate) {
-    //   getCreatorsQuery.andWhere("creator.engagementRate >= :engagementRate", {
-    //     engagementRate,
-    //   });
-    // }
+    if (engagementRate) {
+      getCreatorsQuery.andWhere("creator.engagementRate >= :engagementRate", {
+        engagementRate,
+      });
+    }
 
-    // if (language) {
-    //   getCreatorsQuery.andWhere("creator.language = :language", { language });
-    // }
+    if (language) {
+      getCreatorsQuery.andWhere("creator.language = :language", { language });
+    }
 
-    // if (address) {
-    //   getCreatorsQuery.andWhere("creator.address = :address", { address });
-    // }
+    if (address) {
+      getCreatorsQuery.andWhere(`creator.address @> '["${address}"]'`);
+    }
 
-    // if (category) {
-    //   getCreatorsQuery.andWhere("creator.category = :category", { category });
-    // }
+    if (category) {
+      getCreatorsQuery.andWhere(
+        `creator.potentialCategories @> '[["${category}"]]'`,
+      );
+    }
 
     const [creators, total] = await getCreatorsQuery.getManyAndCount();
-    const creatorsWithEngagementRate = creators.map((creator) => {
-      const viewCount = parseInt((creator.viewCount as string | null) || "0");
-      const likeCount = parseInt((creator.likeCount as string | null) || "0");
-      const commentCount = parseInt(
-        (creator.commentCount as string | null) || "0",
-      );
-      const shareCount = parseInt((creator.shareCount as string | null) || "0");
-      let engagementRate = 0;
-      if (
-        !isNaN(viewCount) &&
-        !isNaN(likeCount) &&
-        !isNaN(commentCount) &&
-        !isNaN(shareCount)
-      ) {
-        engagementRate =
-          ((likeCount + commentCount + shareCount) / viewCount) * 100;
-      }
-      return {
-        ...creator,
-        engagementRate,
-      };
-    });
 
-    const response = BaseResponse.success(creatorsWithEngagementRate, {
+    const response = BaseResponse.success(creators, {
       page: pagination?.page || 1,
       perPage: pagination?.perPage || 10,
       total: total,
@@ -183,19 +167,19 @@ export const getFilterCreator = tryCatchController(
         })),
       );
 
-    const category = [
-      {
-        id: "Travel",
-        value: "Travel",
-      },
-    ] as any[];
+    const category = await dataSource.manager.query(
+      `SELECT DISTINCT potential_categorie as id, potential_categorie as value
+      FROM tbl_creator_video, jsonb_array_elements(potential_categories) AS potential_categorie
+      WHERE potential_categorie IS NOT NULL
+      ORDER BY potential_categorie ASC;`,
+    );
 
-    const address = [
-      {
-        id: "Aceh, Indonesia",
-        value: "Aceh, Indonesia",
-      },
-    ];
+    const address = await dataSource.manager.query(
+      `SELECT DISTINCT address as id, address as value
+      FROM tbl_creator_video
+      WHERE address IS NOT NULL
+      ORDER BY address ASC;`,
+    );
 
     const response = BaseResponse.success({
       country,
