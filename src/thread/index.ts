@@ -275,23 +275,32 @@ async function main(countryCode: string, industryId: string) {
   }
 }
 
-async function upsertVideoDetail(videos: TiktokCreatorVideo[]) {
+async function upsertVideoDetail(
+  videos: TiktokCreatorVideo[],
+  creator: CreatorEntity,
+) {
   try {
     if (!dataSource.isInitialized) {
       await dataSource.initialize();
     }
 
-    const videosToUpdate = videos.map((video) => {
-      const rawVideo = CreatorVideoEntity.create({
-        id: video.id,
-        address: video.contentLocation?.address?.streetAddress,
-        suggestedWords: video.suggestedWords,
-        potentialCategories: video.diversificationLabels,
-      });
+    videos
+      .map((video) => {
+        const videoFromDb = creator.videos.find((v) => v.id === video.id);
+        if (!videoFromDb) {
+          return undefined;
+        }
+        videoFromDb.address =
+          video.contentLocation?.address?.streetAddress || null;
+        videoFromDb.suggestedWords = video.suggestedWords;
+        videoFromDb.potentialCategories = video.diversificationLabels;
 
-      return rawVideo;
-    }) as CreatorVideoEntity[];
-    await CreatorVideoEntity.upsert(videosToUpdate, ["id"]);
+        return videoFromDb;
+      })
+      .filter((v) => v) as CreatorVideoEntity[];
+    creator.visibility = true;
+    await creator.save();
+    await CreatorVideoEntity.save(creator.videos);
   } catch (error: any) {
     console.log(
       `Error upserting video detail, reason: ${error.message}`,
@@ -313,10 +322,12 @@ async function main2() {
     relations: ["videos"],
   });
 
+  await sendTelegramMessage("Start get and upsert video detail");
   for (let i = 0; i < creators.length; i++) {
     const creator = creators[i];
     const videos = await taskGetVideoDetail(creator);
-    await upsertVideoDetail(videos);
+    await upsertVideoDetail(videos, creator);
+    break;
   }
   console.log("Get and upsert video detail complete");
   await sendTelegramMessage("Get and upsert video detail complete");
