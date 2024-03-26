@@ -127,7 +127,7 @@ export default async function taskGetCreatorData(
     retryDelay?: number;
     timeout?: number;
   } = {},
-  maxRetryEachVideo: number = 3,
+  maxRetryEachCreator: number = 3,
 ) {
   globalCreatorData = [];
   puppeteer.use(StealthPlugin());
@@ -144,7 +144,7 @@ export default async function taskGetCreatorData(
           "--disable-features=site-per-process",
         ],
       },
-      retryLimit: maxRetryEachVideo,
+      retryLimit: maxRetryEachCreator,
       retryDelay: 5000,
       timeout: 60000,
       ...clusterOptions,

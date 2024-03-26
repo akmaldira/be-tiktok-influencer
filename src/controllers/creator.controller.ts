@@ -86,9 +86,77 @@ export const getFilterCreator = tryCatchController(
       order: { value: "ASC" },
     });
 
+    const follower = [
+      "100",
+      "1000",
+      "10000",
+      "100000",
+      "1000000",
+      "10000000",
+      "100000000",
+      "1000000000",
+    ];
+
+    const engagementRate = [
+      {
+        id: "5",
+        value: "5%",
+      },
+      {
+        id: "10",
+        value: "10%",
+      },
+      {
+        id: "15",
+        value: "15%",
+      },
+      {
+        id: "20",
+        value: "20%",
+      },
+      {
+        id: "25",
+        value: "25%",
+      },
+      {
+        id: "30",
+        value: "30%",
+      },
+    ];
+
+    const language = await CreatorEntity.createQueryBuilder("creator")
+      .select("DISTINCT creator.language")
+      .orderBy("creator.language", "ASC")
+      .getRawMany()
+      .then((res) =>
+        res.map((item) => ({
+          id: item.language,
+          value: item.language.toUpperCase(),
+        })),
+      );
+
+    const category = [
+      {
+        id: "Travel",
+        value: "Travel",
+      },
+    ] as any[];
+
+    const address = [
+      {
+        id: "Aceh, Indonesia",
+        value: "Aceh, Indonesia",
+      },
+    ];
+
     const response = BaseResponse.success({
       country,
       industry,
+      follower,
+      engagementRate,
+      language,
+      category,
+      address,
     });
 
     return res.json(response);

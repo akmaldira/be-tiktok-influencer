@@ -269,6 +269,24 @@ async function main(countryCode: string, industryId: string) {
   }
 }
 
+async function main2() {
+  if (!dataSource.isInitialized) {
+    await dataSource.initialize();
+  }
+
+  const creators = await CreatorEntity.find({
+    where: {
+      // sync videos condition
+      visibility: true,
+    },
+    relations: ["videos"],
+  });
+
+  for (let i = 0; i < creators.length; i++) {
+    //
+  }
+}
+
 process.on("exit", async (code) => {
   if (code === 0) {
     console.log("exit successfully");
