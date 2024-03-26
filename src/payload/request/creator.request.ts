@@ -1,6 +1,7 @@
 import {
   BaseSchema,
   Output,
+  maxValue,
   minValue,
   number,
   object,
@@ -22,6 +23,7 @@ export const paginationSpec = object({
   page: number("Page must be number", [minValue(1, "Page must be at least 1")]),
   perPage: number("PerPage must be number", [
     minValue(1, "PerPage must be at least 1"),
+    maxValue(100, "PerPage must be at most 100"),
   ]),
 });
 
@@ -35,6 +37,10 @@ export const searchCreatorQuerySpec = object({
       followersFilterSpec,
     ),
   ),
+  engagementRate: optional(string("Engagement rate must be string")),
+  language: optional(string("Language must be string")),
+  address: optional(string("Address must be string")),
+  category: optional(string("Category must be string")),
   pagination: optional(
     transform<BaseSchema, Output<typeof paginationSpec> | undefined>(
       string(),

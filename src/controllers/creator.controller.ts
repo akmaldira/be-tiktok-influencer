@@ -9,10 +9,16 @@ import { parse } from "valibot";
 
 export const getCreators = tryCatchController(
   async (req: Request, res: Response) => {
-    const { pagination, country, industry, followers } = parse(
-      searchCreatorQuerySpec,
-      req.query,
-    );
+    const {
+      pagination,
+      country,
+      industry,
+      followers,
+      engagementRate,
+      language,
+      address,
+      category,
+    } = parse(searchCreatorQuerySpec, req.query);
 
     const getCreatorsQuery = CreatorEntity.createQueryBuilder("creator")
       .where("creator.visibility = true")
@@ -42,6 +48,24 @@ export const getCreators = tryCatchController(
         followers,
       );
     }
+
+    // if (engagementRate) {
+    //   getCreatorsQuery.andWhere("creator.engagementRate >= :engagementRate", {
+    //     engagementRate,
+    //   });
+    // }
+
+    // if (language) {
+    //   getCreatorsQuery.andWhere("creator.language = :language", { language });
+    // }
+
+    // if (address) {
+    //   getCreatorsQuery.andWhere("creator.address = :address", { address });
+    // }
+
+    // if (category) {
+    //   getCreatorsQuery.andWhere("creator.category = :category", { category });
+    // }
 
     const [creators, total] = await getCreatorsQuery.getManyAndCount();
     const creatorsWithEngagementRate = creators.map((creator) => {
@@ -87,14 +111,38 @@ export const getFilterCreator = tryCatchController(
     });
 
     const follower = [
-      "100",
-      "1000",
-      "10000",
-      "100000",
-      "1000000",
-      "10000000",
-      "100000000",
-      "1000000000",
+      {
+        id: 100,
+        value: "100",
+      },
+      {
+        id: 1000,
+        value: "1,000",
+      },
+      {
+        id: 10000,
+        value: "10,000",
+      },
+      {
+        id: 100000,
+        value: "100,000",
+      },
+      {
+        id: 1000000,
+        value: "1,000,000",
+      },
+      {
+        id: 10000000,
+        value: "10,000,000",
+      },
+      {
+        id: 100000000,
+        value: "100,000,000",
+      },
+      {
+        id: 1000000000,
+        value: "1,000,000,000",
+      },
     ];
 
     const engagementRate = [
