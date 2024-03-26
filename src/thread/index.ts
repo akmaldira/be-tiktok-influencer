@@ -327,7 +327,6 @@ async function main2() {
     const creator = creators[i];
     const videos = await taskGetVideoDetail(creator);
     await upsertVideoDetail(videos, creator);
-    break;
   }
   console.log("Get and upsert video detail complete");
   await sendTelegramMessage("Get and upsert video detail complete");
