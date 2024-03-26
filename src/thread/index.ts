@@ -7,10 +7,12 @@ import TiktokIndustryEntity from "../database/entities/tiktok-industry.entity";
 import taskGetCreatorData from "./task-get-creator-data";
 import taskGetHashtags from "./task-get-hashtag";
 import taskGetVideoByHashtag from "./task-get-hashtag-video";
+import taskGetVideoDetail from "./task-get-video-detail";
 import TiktokHelper from "./tiktok-helper";
 import {
   PopularHashtag,
   TiktokCreatorDetail,
+  TiktokCreatorVideo,
   TiktokVideoStats,
   TiktokVideoTimelineByHashtag,
 } from "./tiktok-types";
@@ -258,14 +260,43 @@ async function main(countryCode: string, industryId: string) {
     );
 
     await upsertCreatorData(creatorData, industry);
-    console.log("Upsert creator data complete");
-    await sendTelegramMessage("Upsert creator data complete");
+    console.log(
+      `Upsert creator data on industries [${industrieString}] complete`,
+    );
+    await sendTelegramMessage(
+      `Upsert creator data on industries [${industrieString}] complete`,
+    );
 
     // TODO: Implement get video detail task
   } catch (error: any) {
     await sendTelegramMessage(`Error scraping data, reason: ${error.message}`);
     console.error(error);
     process.exit(1);
+  }
+}
+
+async function upsertVideoDetail(videos: TiktokCreatorVideo[]) {
+  try {
+    if (!dataSource.isInitialized) {
+      await dataSource.initialize();
+    }
+
+    const videosToUpdate = videos.map((video) => {
+      const rawVideo = CreatorVideoEntity.create({
+        id: video.id,
+        address: video.contentLocation?.address?.streetAddress,
+        suggestedWords: video.suggestedWords,
+        potentialCategories: video.diversificationLabels,
+      });
+
+      return rawVideo;
+    }) as CreatorVideoEntity[];
+    await CreatorVideoEntity.upsert(videosToUpdate, ["id"]);
+  } catch (error: any) {
+    console.log(
+      `Error upserting video detail, reason: ${error.message}`,
+      error,
+    );
   }
 }
 
@@ -283,8 +314,12 @@ async function main2() {
   });
 
   for (let i = 0; i < creators.length; i++) {
-    //
+    const creator = creators[i];
+    const videos = await taskGetVideoDetail(creator);
+    await upsertVideoDetail(videos);
   }
+  console.log("Get and upsert video detail complete");
+  await sendTelegramMessage("Get and upsert video detail complete");
 }
 
 process.on("exit", async (code) => {
@@ -333,23 +368,29 @@ process.on("uncaughtException", async (error) => {
 });
 
 (async () => {
-  // Yang dikomen ini untuk sudah dijalankan
-  // await main("ID", "10000000000");
-  await main("ID", "11000000000");
-  await main("ID", "12000000000");
-  await main("ID", "13000000000");
-  await main("ID", "14000000000");
-  await main("ID", "15000000000");
-  await main("ID", "17000000000");
-  await main("ID", "18000000000");
-  await main("ID", "19000000000");
-  await main("ID", "21000000000");
-  await main("ID", "22000000000");
-  await main("ID", "23000000000");
-  await main("ID", "24000000000");
-  await main("ID", "25000000000");
-  await main("ID", "26000000000");
-  await main("ID", "27000000000");
-  await main("ID", "28000000000");
-  await main("ID", "29000000000");
+  const PROCESS_NAME = "GET_VIDEO_DETAIL" as "GET_DATA" | "GET_VIDEO_DETAIL";
+
+  if (PROCESS_NAME == "GET_DATA") {
+    // Yang dikomen ini untuk sudah dijalankan
+    // await main("ID", "10000000000");
+    // await main("ID", "11000000000");
+    // await main("ID", "12000000000");
+    // await main("ID", "13000000000");
+    // await main("ID", "14000000000");
+    // await main("ID", "15000000000");
+    await main("ID", "17000000000");
+    // await main("ID", "18000000000");
+    // await main("ID", "19000000000");
+    await main("ID", "21000000000");
+    await main("ID", "22000000000");
+    await main("ID", "23000000000");
+    await main("ID", "24000000000");
+    await main("ID", "25000000000");
+    await main("ID", "26000000000");
+    await main("ID", "27000000000");
+    await main("ID", "28000000000");
+    await main("ID", "29000000000");
+  } else if (PROCESS_NAME == "GET_VIDEO_DETAIL") {
+    await main2();
+  }
 })();

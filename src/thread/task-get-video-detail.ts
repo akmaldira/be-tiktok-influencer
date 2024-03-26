@@ -6,6 +6,29 @@ import puppeteer from "puppeteer-extra";
 import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { TiktokCreatorVideo } from "./tiktok-types";
 
+function extractVideoDetailFromHTML(html: string) {
+  const match = html.match(
+    /<script id="__UNIVERSAL_DATA_FOR_REHYDRATION__"([^>]+)>([^<]+)<\/script>/,
+  );
+  if (!match) {
+    if (html.includes("Please wait...")) {
+      throw new Error(`Website is loading, please wait...`);
+    }
+    throw new Error(`Cannot find video detail in HTML`);
+  }
+
+  const jsonData = JSON.parse(match[2]) as any;
+  const videoDetailJsonData =
+    jsonData["__DEFAULT_SCOPE__"]["webapp.video-detail"];
+  const videoDetail = videoDetailJsonData?.itemInfo?.itemStruct as
+    | TiktokCreatorVideo
+    | undefined;
+  if (!videoDetail) {
+    throw new Error(`Cannot find video detail in JSON`);
+  }
+  return videoDetail;
+}
+
 async function getVideoDetail({
   page,
   data,
@@ -25,23 +48,31 @@ async function getVideoDetail({
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
   );
 
-  // TODO: Implement get video detail
-
-  await page.goto(
+  const videoDetailResponse = await page.goto(
     `https://www.tiktok.com/@${data.video.creator.uniqueId}/video/${data.video.id}`,
   );
 
-  const videoDetailResponse = await page.waitForResponse((response) => {
-    const url = response.url();
-    const status = response.status();
-    return (
-      url.includes(
-        `https://www.tiktok.com/@${data.video.creator.uniqueId}/video/${data.video.id}`,
-      ) && status === 200
-    );
-  });
+  // const videoDetailResponse = await page.waitForResponse((response) => {
+  //   const url = response.url();
+  //   const status = response.status();
+  //   console.log(url, status);
+  //   return (
+  //     url.includes(
+  //       `https://www.tiktok.com/@${data.video.creator.uniqueId}/video/${data.video.id}`,
+  //     ) && status === 200
+  //   );
+  // });
+  if (!videoDetailResponse) {
+    throw new Error(`Cannot get video detail`);
+  }
 
-  const videoDetail = await videoDetailResponse.text();
+  const html = await videoDetailResponse.text();
+  const videoDetail = extractVideoDetailFromHTML(html);
+  console.log(
+    `getVideoDetail on creator @${data.video.creator.uniqueId} video ${data.video.id} done`,
+  );
+  globalVideos.push(videoDetail);
+  await page.close();
 }
 
 let globalVideos: TiktokCreatorVideo[] = [];
@@ -67,7 +98,7 @@ export default async function taskGetVideoDetail(
     maxConcurrency: 3,
     puppeteer,
     puppeteerOptions: {
-      headless: true,
+      headless: false,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
@@ -98,6 +129,7 @@ export default async function taskGetVideoDetail(
     const video = creator.videos[i];
     video.creator = {
       id: creator.id,
+      uniqueId: creator.uniqueId,
     } as CreatorEntity;
     cluster.queue({ video }, getVideoDetail);
   }
