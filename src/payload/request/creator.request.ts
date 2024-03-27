@@ -23,7 +23,7 @@ export const paginationSpec = object({
   page: number("Page must be number", [minValue(1, "Page must be at least 1")]),
   perPage: number("PerPage must be number", [
     minValue(1, "PerPage must be at least 1"),
-    maxValue(100, "PerPage must be at most 100"),
+    maxValue(25, "PerPage must be at most 25"),
   ]),
 });
 

@@ -116,16 +116,16 @@ export default class CreatorView {
 
   @ViewColumn({
     name: "industries",
-    transformer: {
-      from: (values: TiktokIndustryEntity[]) => {
-        const uniqueIndustries = new Map();
-        values.forEach((value) => {
-          uniqueIndustries.set(value.id, value);
-        });
-        return Array.from(uniqueIndustries.values());
-      },
-      to: (value: any) => value,
-    },
+    // transformer: {
+    //   from: (values: TiktokIndustryEntity[]) => {
+    //     const uniqueIndustries = new Map();
+    //     values.forEach((value) => {
+    //       uniqueIndustries.set(value.id, value);
+    //     });
+    //     return Array.from(uniqueIndustries.values());
+    //   },
+    //   to: (value: any) => value,
+    // },
   })
   industries: TiktokIndustryEntity[];
 
@@ -155,55 +155,70 @@ export default class CreatorView {
 
   @ViewColumn({
     name: "suggested_words",
-    transformer: {
-      from: (values: string[][]) => {
-        if (!values) return null;
-        const joinValues = values.flat(1);
-        const uniqueCategories = new Map();
-        joinValues.forEach((value) => {
-          uniqueCategories.set(value[0], value);
-        });
-        return Array.from(uniqueCategories.values());
-      },
-      to: (value: any) => value,
-    },
+    // transformer: {
+    //   from: (values: string[][]) => {
+    //     if (!values) return null;
+    //     const joinValues = values.flat(1);
+    //     const uniqueCategories = new Map();
+    //     joinValues.forEach((value) => {
+    //       uniqueCategories.set(value, value);
+    //     });
+    //     return Array.from(uniqueCategories.values());
+    //   },
+    //   to: (value: any) => value,
+    // },
   })
   suggestedWords: string[][] | null;
 
   @ViewColumn({
     name: "potential_categories",
-    transformer: {
-      from: (values: string[][]) => {
-        if (!values) return null;
-        const joinValues = values.flat(1);
-        const uniqueCategories = new Map();
-        joinValues.forEach((value) => {
-          uniqueCategories.set(value[0], value);
-        });
-        return Array.from(uniqueCategories.values());
-      },
-      to: (value: any) => value,
-    },
+    // transformer: {
+    //   from: (values: string[][]) => {
+    //     if (!values) return null;
+    //     const joinValues = values.flat(1);
+    //     const uniqueCategories = new Map();
+    //     joinValues.forEach((value) => {
+    //       uniqueCategories.set(value, value);
+    //     });
+    //     return Array.from(uniqueCategories.values());
+    //   },
+    //   to: (value: any) => value,
+    // },
   })
   potentialCategories: string[][] | null;
 
   @ViewColumn({
     name: "address",
-    transformer: {
-      from: (values: string[]) => {
-        if (!values) return null;
-        const uniqueCategories = new Map();
-        values.forEach((value) => {
-          uniqueCategories.set(value, value);
-        });
-        return Array.from(uniqueCategories.values());
-      },
-      to: (value: any) => value,
-    },
+    // transformer: {
+    //   from: (values: string[]) => {
+    //     if (!values) return null;
+    //     const uniqueCategories = new Map();
+    //     values.forEach((value) => {
+    //       uniqueCategories.set(value, value);
+    //     });
+    //     return Array.from(uniqueCategories.values());
+    //   },
+    //   to: (value: any) => value,
+    // },
   })
   address: string[] | null;
 
-  @ViewColumn({ name: "text_extras" })
+  @ViewColumn({
+    name: "text_extras",
+    // transformer: {
+    //   from: (values: { hashtagName: string }[][]) => {
+    //     if (!values) return null;
+    //     const joinValues = values.flat(1);
+    //     const uniqueCategories = new Map();
+    //     joinValues.forEach((value) => {
+    //       if (value.hashtagName)
+    //         uniqueCategories.set(value.hashtagName, value.hashtagName);
+    //     });
+    //     return Array.from(uniqueCategories.values());
+    //   },
+    //   to: (value: any) => value,
+    // },
+  })
   textExtras:
     | {
         hashtagName: string;

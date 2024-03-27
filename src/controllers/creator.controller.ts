@@ -3,6 +3,7 @@ import CreatorView from "database/entities/creator-view.entity";
 import CreatorEntity from "database/entities/creator.entity";
 import TiktokCountryEntity from "database/entities/tiktok-country.entity";
 import TiktokIndustryEntity from "database/entities/tiktok-industry.entity";
+import { creatorResponseSpec } from "dtos/creator.dto";
 import { Request, Response } from "express";
 import { searchCreatorQuerySpec } from "payload/request/creator.request";
 import BaseResponse from "payload/response/base-response";
@@ -74,8 +75,11 @@ export const getCreators = tryCatchController(
     }
 
     const [creators, total] = await getCreatorsQuery.getManyAndCount();
+    const creatorResponse = creators.map((creator) =>
+      creatorResponseSpec(creator),
+    );
 
-    const response = BaseResponse.success(creators, {
+    const response = BaseResponse.success(creatorResponse, {
       page: pagination?.page || 1,
       perPage: pagination?.perPage || 10,
       total: total,
