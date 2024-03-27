@@ -41,6 +41,8 @@ export const searchCreatorQuerySpec = object({
   language: optional(string("Language must be string")),
   address: optional(string("Address must be string")),
   category: optional(string("Category must be string")),
+  keywords: optional(string("Keywords must be string")),
+  hashtags: optional(string("Hashtags must be string")),
   pagination: optional(
     transform<BaseSchema, Output<typeof paginationSpec> | undefined>(
       string(),

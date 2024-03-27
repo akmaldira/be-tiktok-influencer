@@ -8,32 +8,38 @@ export const creatorResponseSpec = (creator: CreatorEntity | CreatorView) => {
     let uniqueCategories = null as string[] | null;
     if (creator.potentialCategories) {
       const categoriesJoined = creator.potentialCategories.flat(1);
-      const mapCategories = new Map() as Map<string, string>;
+      const mapCategories = {} as { [key: string]: number };
       categoriesJoined.forEach((category) => {
-        mapCategories.set(category, category);
+        mapCategories[category] = (mapCategories[category] || 0) + 1;
       });
-      uniqueCategories = Array.from(mapCategories.values());
+      uniqueCategories = Object.keys(mapCategories).sort(
+        (a, b) => mapCategories[b] - mapCategories[a],
+      );
       creator.potentialCategories = uniqueCategories as any;
     }
 
     let uniqueSuggestedWords = null as string[] | null;
     if (creator.suggestedWords) {
       const suggestedWordsJoined = creator.suggestedWords.flat(1);
-      const mapSuggestedWords = new Map() as Map<string, string>;
+      const mapSuggestedWords = {} as { [key: string]: number };
       suggestedWordsJoined.forEach((word) => {
-        mapSuggestedWords.set(word, word);
+        mapSuggestedWords[word] = (mapSuggestedWords[word] || 0) + 1;
       });
-      uniqueSuggestedWords = Array.from(mapSuggestedWords.values());
+      uniqueSuggestedWords = Object.keys(mapSuggestedWords).sort(
+        (a, b) => mapSuggestedWords[b] - mapSuggestedWords[a],
+      );
       creator.suggestedWords = uniqueSuggestedWords as any;
     }
 
     let uniqueAddress = null as string[] | null;
     if (creator.address) {
-      const mapAddress = new Map() as Map<string, string>;
+      const mapAddress = {} as { [key: string]: number };
       creator.address.forEach((address) => {
-        mapAddress.set(address, address);
+        mapAddress[address] = (mapAddress[address] || 0) + 1;
       });
-      uniqueAddress = Array.from(mapAddress.values());
+      uniqueAddress = Object.keys(mapAddress).sort(
+        (a, b) => mapAddress[b] - mapAddress[a],
+      );
       creator.address = uniqueAddress as any;
     }
 
@@ -52,14 +58,18 @@ export const creatorResponseSpec = (creator: CreatorEntity | CreatorView) => {
 
     let uniqueHashtags = null as string[] | null;
     if (creator.textExtras) {
-      const mapHashtags = new Map() as Map<string, string>;
+      const mapHashtags = {} as { [key: string]: number };
       creator.textExtras.forEach((textExtra) => {
         if (!textExtra) return;
         textExtra.forEach((extra) => {
-          mapHashtags.set(extra.hashtagName, extra.hashtagName);
+          if (!extra.hashtagName) return;
+          mapHashtags[extra.hashtagName] =
+            (mapHashtags[extra.hashtagName] || 0) + 1;
         });
       });
-      uniqueHashtags = Array.from(mapHashtags.values());
+      uniqueHashtags = Object.keys(mapHashtags).sort(
+        (a, b) => mapHashtags[b] - mapHashtags[a],
+      );
       creator.textExtras = uniqueHashtags as any;
     }
   }

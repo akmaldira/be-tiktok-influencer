@@ -21,6 +21,8 @@ export const getCreators = tryCatchController(
       language,
       address,
       category,
+      keywords,
+      hashtags,
     } = parse(searchCreatorQuerySpec, req.query);
 
     const getCreatorsQuery = dataSource.manager
@@ -71,6 +73,18 @@ export const getCreators = tryCatchController(
     if (category) {
       getCreatorsQuery.andWhere(
         `creator.potentialCategories @> '[["${category}"]]'`,
+      );
+    }
+
+    if (keywords) {
+      getCreatorsQuery.andWhere(
+        `creator.suggestedWords  @> '[["${keywords}"]]'`,
+      );
+    }
+
+    if (hashtags) {
+      getCreatorsQuery.andWhere(
+        `creator.textExtras @> '[[{"hashtagName": "${hashtags}"}]]'`,
       );
     }
 
@@ -160,6 +174,21 @@ export const getFilterCreator = tryCatchController(
       },
     ];
 
+    const contactBy = [
+      {
+        id: "email",
+        value: "Email",
+      },
+      // {
+      //   id: "phone",
+      //   value: "Phone",
+      // },
+      // {
+      //   id: "instagram",
+      //   value: "Instagram",
+      // },
+    ];
+
     const language = await CreatorEntity.createQueryBuilder("creator")
       .select("DISTINCT creator.language")
       .orderBy("creator.language", "ASC")
@@ -185,6 +214,20 @@ export const getFilterCreator = tryCatchController(
       ORDER BY address ASC;`,
     );
 
+    const keywords = await dataSource.manager.query(
+      `SELECT DISTINCT suggested_word as id, suggested_word as value
+      FROM tbl_creator_video, jsonb_array_elements(suggested_words) AS suggested_word
+      WHERE suggested_word IS NOT NULL
+      ORDER BY suggested_word ASC;`,
+    );
+
+    const hashtags = await dataSource.manager.query(
+      `SELECT DISTINCT text_extras->'hashtagName' AS id, text_extras->'hashtagName' AS value
+      FROM tbl_creator_video, jsonb_array_elements(text_extra) AS text_extras
+      WHERE text_extras->'hashtagName' IS NOT NULL
+      ORDER BY text_extras->'hashtagName' ASC;`,
+    );
+
     const response = BaseResponse.success({
       country,
       industry,
@@ -193,6 +236,9 @@ export const getFilterCreator = tryCatchController(
       language,
       category,
       address,
+      contactBy,
+      keywords,
+      hashtags,
     });
 
     return res.json(response);

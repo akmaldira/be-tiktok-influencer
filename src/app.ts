@@ -13,12 +13,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
-app.get("/", (req, res) => {
-  return res.send("Hello World");
-});
+app.use(express.static("public"));
 app.use("/api/auth", authRoute);
 app.use("/api/creator", creatorRoute);
-
+app.get("*", (req, res) => {
+  res.sendFile("index.html", { root: "public" });
+});
 app.use(errorMiddleware);
 
 async function listenApp() {

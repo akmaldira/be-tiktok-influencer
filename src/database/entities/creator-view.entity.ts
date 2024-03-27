@@ -105,6 +105,9 @@ export default class CreatorView {
   @ViewColumn({ name: "unique_id" })
   uniqueId: string;
 
+  @ViewColumn({ name: "email" })
+  email: string | null;
+
   @ViewColumn({ name: "nick_name" })
   nickName: string | null;
 
@@ -134,6 +137,9 @@ export default class CreatorView {
 
   @ViewColumn({ name: "bio_link" })
   bioLink: string | null;
+
+  @ViewColumn({ name: "verified" })
+  verified: boolean | null;
 
   @ViewColumn({ name: "follower_count" })
   followerCount: number | null;
