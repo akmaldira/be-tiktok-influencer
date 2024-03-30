@@ -48,6 +48,10 @@ export const createCampaign = tryCatchController(
 
     res.write("step: find-influencer\n");
     const creators = await relevantCreatorsQuery.getMany();
+    if (creators.length === 0) {
+      res.write("No influencers found\n");
+      return res.end();
+    }
 
     res.write("step: generate-campaign\n");
     await searchRelevantCreators(res, creators, {
