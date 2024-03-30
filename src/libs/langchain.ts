@@ -56,8 +56,8 @@ export const searchRelevantCreators = async (
   },
 ) => {
   const documents = createDocumentFromCreator(creators);
-  res.write("step: parsing-influencer\n");
   const vectorStore = await createVectorStore(documents);
+  res.write("step: parsing-influencer\n");
   const weeksInTimeline = timeline.split("_")[0];
   let k = 1;
   if (weeksInTimeline === "ONE") {
