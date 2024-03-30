@@ -27,7 +27,7 @@ export const getCreators = tryCatchController(
 
     const getCreatorsQuery = dataSource.manager
       .createQueryBuilder(CreatorView, "creator")
-      .where("creator.visibility = true")
+      // .where("creator.visibility = true")
       .leftJoinAndSelect("creator.country", "country")
       .orderBy("creator.followerCount", "DESC");
 
@@ -38,7 +38,7 @@ export const getCreators = tryCatchController(
           pagination.page ? (pagination.page - 1) * pagination.perPage : 0,
         );
     } else {
-      getCreatorsQuery.take(10);
+      getCreatorsQuery.limit(10);
     }
 
     if (country) {
@@ -67,7 +67,10 @@ export const getCreators = tryCatchController(
     }
 
     if (address) {
-      getCreatorsQuery.andWhere(`creator.address @> '["${address}"]'`);
+      getCreatorsQuery.andWhere(
+        `(creator.address)::text ilike '%${address}%'`,
+        { address },
+      );
     }
 
     if (category) {
@@ -78,13 +81,13 @@ export const getCreators = tryCatchController(
 
     if (keywords) {
       getCreatorsQuery.andWhere(
-        `creator.suggestedWords  @> '[["${keywords}"]]'`,
+        `(creator.suggestedWords)::text ilike '%${keywords}%'`,
       );
     }
 
     if (hashtags) {
       getCreatorsQuery.andWhere(
-        `creator.textExtras @> '[[{"hashtagName": "${hashtags}"}]]'`,
+        `(creator.textExtras)::text ilike '%${hashtags}%'`,
       );
     }
 
@@ -207,26 +210,26 @@ export const getFilterCreator = tryCatchController(
       ORDER BY potential_categorie ASC;`,
     );
 
-    const address = await dataSource.manager.query(
-      `SELECT DISTINCT address as id, address as value
-      FROM tbl_creator_video
-      WHERE address IS NOT NULL
-      ORDER BY address ASC;`,
-    );
+    // const address = await dataSource.manager.query(
+    //   `SELECT DISTINCT address as id, address as value
+    //   FROM tbl_creator_video
+    //   WHERE address IS NOT NULL
+    //   ORDER BY address ASC;`,
+    // );
 
-    const keywords = await dataSource.manager.query(
-      `SELECT DISTINCT suggested_word as id, suggested_word as value
-      FROM tbl_creator_video, jsonb_array_elements(suggested_words) AS suggested_word
-      WHERE suggested_word IS NOT NULL
-      ORDER BY suggested_word ASC;`,
-    );
+    // const keywords = await dataSource.manager.query(
+    //   `SELECT DISTINCT suggested_word as id, suggested_word as value
+    //   FROM tbl_creator_video, jsonb_array_elements(suggested_words) AS suggested_word
+    //   WHERE suggested_word IS NOT NULL
+    //   ORDER BY suggested_word ASC;`,
+    // );
 
-    const hashtags = await dataSource.manager.query(
-      `SELECT DISTINCT text_extras->'hashtagName' AS id, text_extras->'hashtagName' AS value
-      FROM tbl_creator_video, jsonb_array_elements(text_extra) AS text_extras
-      WHERE text_extras->'hashtagName' IS NOT NULL
-      ORDER BY text_extras->'hashtagName' ASC;`,
-    );
+    // const hashtags = await dataSource.manager.query(
+    //   `SELECT DISTINCT text_extras->'hashtagName' AS id, text_extras->'hashtagName' AS value
+    //   FROM tbl_creator_video, jsonb_array_elements(text_extra) AS text_extras
+    //   WHERE text_extras->'hashtagName' IS NOT NULL
+    //   ORDER BY text_extras->'hashtagName' ASC;`,
+    // );
 
     const response = BaseResponse.success({
       country,
@@ -235,10 +238,10 @@ export const getFilterCreator = tryCatchController(
       engagementRate,
       language,
       category,
-      address,
       contactBy,
-      keywords,
-      hashtags,
+      // address,
+      // keywords,
+      // hashtags,
     });
 
     return res.json(response);
