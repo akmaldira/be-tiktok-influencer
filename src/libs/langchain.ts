@@ -74,7 +74,7 @@ export const searchRelevantCreators = async (
   });
 
   const prompt =
-    ChatPromptTemplate.fromTemplate(`Jawab pertanyaan berikut dengan detail dan jelas. Berikan campaign plan yang sesuai dengan objective, target audience, dan produk yang ditentukan.:
+    ChatPromptTemplate.fromTemplate(`bertindaklah seperti seorang marketer profesional dengan pengalaman lebih dari 10 tahun mengerjakan kampanye influencer dengan hasil yang luar biasa serta berkonversi bagus. khususnya untuk social media channel Tiktok. Jawab pertanyaan berikut dengan detail dan jelas. Berikan campaign plan yang sesuai dengan objective, target audience, dan produk yang ditentukan.:
 
 <context>
 {context}
@@ -101,17 +101,19 @@ Question: {input}`);
     Timeline : ${k} Minggu
     ${industry ? `Industri : ${industry}` : ""}
 
-    Berikan saya campaign plan yang detail dan menarik.
+    sebelum memberikan detail dari kampanye influencer yang sangat kreatif dan sangat berkonversi tinggi, anda harus memberikan deskripsi singkat tentang kampanye ini dalam 1 judul dan 1 paragraf singkat tanpa menyebutkan profile anda, serta berikan jumlah influencer yang tepat untuk usulan kampanye anda.
+
+    BERIKAN juga usulan hashtag atau keyword yang unik, mudah di ingat oleh audience target audience dari produk 
+
     BERIKAN OUTPUT CAMPAIGN SESUAI DENGAN OBJECTIVE, TARGET AUDIENCE YANG DITENTUKAN DENGAN FORMAT :
     Minggu 1:
     - Content
     - Influencer: Nama Influencer (@ dengan uniqueId)
     - Description
-
     Dan seterusnya selama ${k} Minggu. (JANGAN LUPA UNTUK MENGHUBUNGKAN DENGAN OBJECTIVE DAN TARGET AUDIENCE YANG DITENTUKAN)
-
     BERIKAN OUTPUT DALAM BAHASA INDONESIA DAN FORMAT YANG JELAS DAN DETAIL.
-      `,
+
+    SAJIKAN secara kompleks dan detail seperti anda menjelaskan kepada anak kelas 6 sd`,
   });
 
   let response = "";
