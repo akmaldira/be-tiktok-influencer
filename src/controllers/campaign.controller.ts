@@ -1,10 +1,13 @@
 import dataSource from "database/data-source";
+import CampaignEntity from "database/entities/campaign.entity";
 import CreatorView from "database/entities/creator-view.entity";
 import FeedBackEntity from "database/entities/feed-back.entity";
+import UserEntity from "database/entities/user.entity";
 import UnauthorizedError from "exceptions/unauthorized.exception";
 import { Request, Response } from "express";
 import { searchRelevantCreators } from "libs/langchain";
 import { createCampaignBodySpec } from "payload/request/campaign.request";
+import BaseResponse from "payload/response/base-response";
 import tryCatchController from "utils/try-catch-controller";
 import { parse } from "valibot";
 
@@ -60,7 +63,7 @@ export const createCampaign = tryCatchController(
     }
 
     res.write("step: generate-campaign\n");
-    await searchRelevantCreators(res, creators, {
+    const result = await searchRelevantCreators(res, creators, {
       category,
       objective,
       product,
@@ -83,6 +86,40 @@ export const createCampaign = tryCatchController(
       res.write("feed-back: not-found\n");
     }
 
+    const newCampaign = new CampaignEntity();
+    newCampaign.user = {
+      id: req.user.id,
+    } as UserEntity;
+    newCampaign.country = country;
+    newCampaign.industry = industry || null;
+    newCampaign.category = category;
+    newCampaign.objective = objective;
+    newCampaign.product = product;
+    newCampaign.targetAudience = targetAudience;
+    newCampaign.timeline = timeline;
+    newCampaign.result = result;
+
+    await newCampaign.save();
     return res.end();
+  },
+);
+
+export const getCampaign = tryCatchController(
+  async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new UnauthorizedError();
+    }
+
+    const campaigns = await CampaignEntity.find({
+      where: {
+        user: {
+          id: req.user.id,
+        },
+      },
+    });
+
+    const response = BaseResponse.success(campaigns);
+
+    return res.json(response);
   },
 );

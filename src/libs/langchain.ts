@@ -113,7 +113,12 @@ Question: {input}`);
     Dan seterusnya selama ${k} Minggu. (JANGAN LUPA UNTUK MENGHUBUNGKAN DENGAN OBJECTIVE DAN TARGET AUDIENCE YANG DITENTUKAN)
     BERIKAN OUTPUT DALAM BAHASA INDONESIA DAN FORMAT YANG JELAS DAN DETAIL.
 
-    SAJIKAN secara kompleks dan detail seperti anda menjelaskan kepada anak kelas 6 sd`,
+    SAJIKAN secara kompleks dan detail seperti anda menjelaskan kepada anak kelas 6 sd
+    
+    BERIKAN contoh konten yang akan digunakan oleh masing-masing influencer
+
+    HINDARI penggunaan bahasa baku!
+`,
   });
 
   let response = "";
@@ -126,6 +131,8 @@ Question: {input}`);
       res.write(`context: ${chunk.context}\n`);
     }
   }
+
+  res.write("\n\n");
 
   return response;
 };

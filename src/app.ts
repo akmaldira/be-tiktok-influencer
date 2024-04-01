@@ -5,6 +5,7 @@ import "reflect-metadata";
 import authRoute from "routes/auth.route";
 import campaignRoute from "routes/campaign.route";
 import creatorRoute from "routes/creator.route";
+import feedBackRoute from "routes/feed-back.route";
 import { appConfig } from "./config/env";
 import dataSource from "./database/data-source";
 
@@ -18,6 +19,7 @@ app.use(express.static("public"));
 app.use("/api/auth", authRoute);
 app.use("/api/creator", creatorRoute);
 app.use("/api/campaign", campaignRoute);
+app.use("/api/feedback", feedBackRoute);
 app.get("*", (req, res) => {
   res.sendFile("index.html", { root: "public" });
 });

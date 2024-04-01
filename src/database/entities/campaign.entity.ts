@@ -36,6 +36,9 @@ export default class CampaignEntity extends TrackedEntity {
   @Column({ type: "enum", enum: Timeline, name: "timeline" })
   timeline: Timeline;
 
+  @Column({ type: "text", name: "result" })
+  result: string;
+
   @ManyToOne(() => UserEntity, (user) => user.campaigns)
   @JoinColumn({ name: "user_id" })
   user: Relation<UserEntity>;
