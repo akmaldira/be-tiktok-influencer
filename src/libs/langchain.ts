@@ -74,7 +74,7 @@ export const searchRelevantCreators = async (
   });
 
   const prompt =
-    ChatPromptTemplate.fromTemplate(`Answer the following question based only on the provided context:
+    ChatPromptTemplate.fromTemplate(`Jawab pertanyaan berikut dengan detail dan jelas. Berikan campaign plan yang sesuai dengan objective, target audience, dan produk yang ditentukan.:
 
 <context>
 {context}

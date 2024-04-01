@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Relation,
+} from "typeorm";
+import CampaignEntity from "./campaign.entity";
 import { Provider, UserRole } from "./enum";
 import TrackedEntity from "./tracked.entity";
 
@@ -24,4 +31,7 @@ export default class UserEntity extends TrackedEntity {
 
   @Column({ type: "enum", enum: UserRole, default: UserRole.USER })
   role: UserRole;
+
+  @OneToMany(() => CampaignEntity, (campaign) => campaign.user)
+  campaigns: Relation<CampaignEntity[]>;
 }
