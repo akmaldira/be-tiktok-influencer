@@ -116,6 +116,9 @@ export const getCampaign = tryCatchController(
           id: req.user.id,
         },
       },
+      order: {
+        createdAt: "DESC",
+      },
     });
 
     const response = BaseResponse.success(campaigns);

@@ -10,7 +10,7 @@ export const createCampaignBodySpec = object({
     "Objective must be one of SALES, ENGAGEMENT, AWARENESS",
   ),
   product: string("Product must be string", [
-    minLength(10, "Product must be more than 10 characters"),
+    minLength(50, "Product must be more than 50 characters"),
     maxLength(255, "Product must be less than 255 characters"),
   ]),
   targetAudience: string("Target audience must be string"),
@@ -18,4 +18,5 @@ export const createCampaignBodySpec = object({
     Timeline,
     "Timeline must be one of ONE_WEEK, TWO_WEEKS, THREE_WEEKS, FOUR_WEEKS",
   ),
+  influencerCount: optional(string("Influencer count must be string")),
 });

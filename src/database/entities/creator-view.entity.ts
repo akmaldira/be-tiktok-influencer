@@ -30,6 +30,7 @@ import TiktokIndustryEntity from "./tiktok-industry.entity";
         SUM(tcv.like_count) AS like_count,
         SUM(tcv.comment_count) AS comment_count,
         SUM(tcv.share_count) AS share_count,
+        CEIL(AVG(tcv.view_count)) as avg_view,
         jsonb_agg(tcv.suggested_words ORDER BY tcv.suggested_words DESC) FILTER (WHERE tcv.suggested_words <> '[]') AS suggested_words,
         jsonb_agg(tcv.potential_categories ORDER BY tcv.potential_categories ASC) FILTER (WHERE tcv.potential_categories IS NOT NULL) AS potential_categories,
         jsonb_agg(tcv.text_extra ORDER BY tcv.text_extra ASC) FILTER (WHERE tcv.text_extra <> '[]') AS text_extras,
@@ -73,6 +74,7 @@ SELECT
     c.comment_count,
     c.share_count,
     c.view_count,
+    c.avg_view,
     c.suggested_words,
     c.potential_categories,
     c.address,
@@ -158,6 +160,9 @@ export default class CreatorView {
 
   @ViewColumn({ name: "view_count" })
   viewCount: number | null;
+
+  @ViewColumn({ name: "avg_view" })
+  avgView: number | null;
 
   @ViewColumn({
     name: "suggested_words",
