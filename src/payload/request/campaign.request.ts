@@ -1,5 +1,5 @@
 import { Objective, Timeline } from "database/entities/enum";
-import { enum_, maxLength, minLength, object, optional, string } from "valibot";
+import { enum_, minLength, object, optional, string } from "valibot";
 
 export const createCampaignBodySpec = object({
   country: string("Country must be string"),
@@ -11,9 +11,10 @@ export const createCampaignBodySpec = object({
   ),
   product: string("Product must be string", [
     minLength(50, "Product must be more than 50 characters"),
-    maxLength(255, "Product must be less than 255 characters"),
   ]),
-  targetAudience: string("Target audience must be string"),
+  targetAudience: string("Target audience must be string", [
+    minLength(50, "Target audience must be more than 50 characters"),
+  ]),
   timeline: enum_(
     Timeline,
     "Timeline must be one of ONE_WEEK, TWO_WEEKS, THREE_WEEKS, FOUR_WEEKS",
