@@ -1,5 +1,13 @@
 import { Objective, Timeline } from "database/entities/enum";
-import { enum_, minLength, object, optional, string } from "valibot";
+import {
+  enum_,
+  minLength,
+  number,
+  object,
+  optional,
+  string,
+  transform,
+} from "valibot";
 
 export const createCampaignBodySpec = object({
   country: string("Country must be string"),
@@ -19,5 +27,11 @@ export const createCampaignBodySpec = object({
     Timeline,
     "Timeline must be one of ONE_WEEK, TWO_WEEKS, THREE_WEEKS, FOUR_WEEKS",
   ),
-  influencerCount: optional(string("Influencer count must be string")),
+  influencerCount: optional(
+    transform(
+      string(),
+      (input) => parseInt(input),
+      number("Influencer count must be number"),
+    ),
+  ),
 });

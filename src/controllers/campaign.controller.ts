@@ -21,6 +21,7 @@ export const createCampaign = tryCatchController(
       product,
       targetAudience,
       timeline,
+      influencerCount,
     } = parse(createCampaignBodySpec, req.body);
 
     if (!req.user) {
@@ -70,6 +71,7 @@ export const createCampaign = tryCatchController(
       targetAudience,
       timeline,
       industry,
+      influencerCount,
     });
 
     const feedback = await FeedBackEntity.findOne({

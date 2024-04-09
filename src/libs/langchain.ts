@@ -46,6 +46,7 @@ export const searchRelevantCreators = async (
     targetAudience,
     timeline,
     industry,
+    influencerCount,
   }: {
     objective: string;
     product: string;
@@ -53,6 +54,7 @@ export const searchRelevantCreators = async (
     targetAudience: string;
     timeline: string;
     industry: string | undefined;
+    influencerCount: number | undefined;
   },
 ) => {
   const documents = createDocumentFromCreator(creators);
@@ -70,7 +72,7 @@ export const searchRelevantCreators = async (
     k = 4;
   }
   const retriever = vectorStore.asRetriever({
-    k,
+    k: influencerCount ?? k,
   });
 
   const prompt =
@@ -100,6 +102,7 @@ Question: {input}`);
     Target Audience : ${targetAudience}
     Timeline : ${k} Minggu
     ${industry ? `Industri : ${industry}` : ""}
+    Jumlah Influencer : ${influencerCount ?? k}
 
     sebelum memberikan detail dari kampanye influencer yang sangat kreatif dan sangat berkonversi tinggi, anda harus memberikan deskripsi singkat tentang kampanye ini dalam 1 judul dan 1 paragraf singkat tanpa menyebutkan profile anda, serta berikan jumlah influencer yang tepat untuk usulan kampanye anda.
 
@@ -109,7 +112,7 @@ Question: {input}`);
     Minggu 1:
     - Content
     - Influencer: Nama Influencer (@ dengan uniqueId)
-    - Description
+
     Dan seterusnya selama ${k} Minggu. (JANGAN LUPA UNTUK MENGHUBUNGKAN DENGAN OBJECTIVE DAN TARGET AUDIENCE YANG DITENTUKAN)
     BERIKAN OUTPUT DALAM BAHASA INDONESIA DAN FORMAT YANG JELAS DAN DETAIL.
 
@@ -118,6 +121,8 @@ Question: {input}`);
     BERIKAN contoh konten yang akan digunakan oleh masing-masing influencer
 
     HINDARI penggunaan bahasa baku!
+
+    ${influencerCount ? `JIKA JUMLAH INFLUENCER LEBIH DARI JUMLAH MINGGU, BERIKAN INFLUENCER LAINNYA SEBANYAK ${influencerCount - k} INFLUENCER PADA BAGIAN AKHIR DENGAN FORMAT "REKOMENDASI INFLUENCER TAMBAHAN"` : ""}
 `,
   });
 

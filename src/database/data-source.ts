@@ -9,7 +9,6 @@ const dataSourceOption: DataSourceOptions = {
   username: dbConfig.USER,
   password: dbConfig.PASSWORD,
   database: dbConfig.DATABASE,
-  ssl: true,
   logging: appConfig.DEBUG,
   entities: [__dirname + "/entities/*.entity{.js,.ts}"],
   migrations: [path.resolve() + "/migrations/*.js"],
