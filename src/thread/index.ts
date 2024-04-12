@@ -4,6 +4,7 @@ import CreatorEntity from "../database/entities/creator.entity";
 import TiktokCountryEntity from "../database/entities/tiktok-country.entity";
 import TiktokHashtagEntity from "../database/entities/tiktok-hashtag.entity";
 import TiktokIndustryEntity from "../database/entities/tiktok-industry.entity";
+import { blacklistHashtags } from "./const";
 import taskGetCreatorData from "./task-get-creator-data";
 import taskGetHashtags from "./task-get-hashtag";
 import taskGetVideoByHashtag from "./task-get-hashtag-video";
@@ -210,7 +211,10 @@ async function main(countryCode: string, industryId: string) {
     );
 
     const startHashtagTask = Date.now();
-    const hashtags = await taskGetHashtags(country, industries);
+    const hashtagsData = await taskGetHashtags(country, industries);
+    const hashtags = hashtagsData.filter(
+      (h) => !blacklistHashtags.find((b) => b.includes(h.hashtag_name)),
+    );
     const endHashtagTask = Date.now();
     const durationHashtagTask = Math.floor(
       (endHashtagTask - startHashtagTask) / 1000,
@@ -317,7 +321,7 @@ async function main2() {
   const creators = await CreatorEntity.find({
     where: {
       // sync videos condition
-      visibility: true,
+      visibility: false,
     },
     relations: ["videos"],
   });
@@ -388,12 +392,12 @@ process.on("uncaughtException", async (error) => {
     // await main("ID", "13000000000");
     // await main("ID", "14000000000");
     // await main("ID", "15000000000");
-    await main("ID", "17000000000");
+    // await main("ID", "17000000000");
     // await main("ID", "18000000000");
     // await main("ID", "19000000000");
-    await main("ID", "21000000000");
-    await main("ID", "22000000000");
-    await main("ID", "23000000000");
+    // await main("ID", "21000000000");
+    // await main("ID", "22000000000");
+    // await main("ID", "23000000000");
     await main("ID", "24000000000");
     await main("ID", "25000000000");
     await main("ID", "26000000000");
