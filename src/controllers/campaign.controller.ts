@@ -22,49 +22,80 @@ export const createCampaign = tryCatchController(
       targetAudience,
       timeline,
       influencerCount,
+      creators,
     } = parse(createCampaignBodySpec, req.body);
 
     if (!req.user) {
       throw new UnauthorizedError();
     }
 
-    const relevantCreatorsQuery = dataSource.manager
-      .createQueryBuilder(CreatorView, "creator")
-      // .where("creator.visibility = true")
-      .leftJoinAndSelect("creator.country", "country")
-      .where("country_id = :country", { country })
-      .orderBy("creator.followerCount", "DESC")
-      .limit(100);
+    let creatorsList: CreatorView[] = [];
 
-    if (industry) {
-      relevantCreatorsQuery.andWhere(
-        `industries @> '[{ "id": "${industry}" }]'`,
-      );
-    }
+    if (!creators) {
+      if (!country) {
+        throw new Error("Country is required");
+      } else if (!category) {
+        throw new Error("Category is required");
+      }
 
-    if (category) {
-      relevantCreatorsQuery.orWhere(
-        `(creator.potentialCategories)::text ilike '%${category}%'`,
-      );
+      const relevantCreatorsQuery = dataSource.manager
+        .createQueryBuilder(CreatorView, "creator")
+        // .where("creator.visibility = true")
+        .leftJoinAndSelect("creator.country", "country")
+        .where("country_id = :country", { country })
+        .orderBy("creator.followerCount", "DESC")
+        .limit(100);
 
-      relevantCreatorsQuery.orWhere(
-        `(creator.suggestedWords)::text ilike '%${category}%'`,
-      );
+      if (industry) {
+        relevantCreatorsQuery.andWhere(
+          `industries @> '[{ "id": "${industry}" }]'`,
+        );
+      }
 
-      relevantCreatorsQuery.orWhere(
-        `(creator.textExtras)::text ilike '%${category}%'`,
-      );
-    }
+      if (category) {
+        relevantCreatorsQuery.orWhere(
+          `(creator.potentialCategories)::text ilike '%${category}%'`,
+        );
 
-    res.write("step: find-influencer\n");
-    const creators = await relevantCreatorsQuery.getMany();
-    if (creators.length === 0) {
-      res.write("No influencers found\n");
-      return res.end();
+        relevantCreatorsQuery.orWhere(
+          `(creator.suggestedWords)::text ilike '%${category}%'`,
+        );
+
+        relevantCreatorsQuery.orWhere(
+          `(creator.textExtras)::text ilike '%${category}%'`,
+        );
+      }
+
+      res.write("step: find-influencer\n");
+      creatorsList = await relevantCreatorsQuery.getMany();
+      if (creatorsList.length === 0) {
+        res.write("No influencers found\n");
+        return res.end();
+      }
+    } else {
+      if (influencerCount) {
+        throw new Error(
+          "Influencer count is not required when creators are selected",
+        );
+      }
+
+      const creatorsListSelected = await dataSource.manager
+        .createQueryBuilder(CreatorView, "creator")
+        .leftJoinAndSelect("creator.country", "country")
+        .where("creator.id IN (:...creators)", {
+          creators: creators.map((c) => c.id),
+        })
+        .orderBy("creator.followerCount", "DESC")
+        .getMany();
+
+      if (creatorsListSelected.length !== creators.length) {
+        throw new Error("Invalid creators id");
+      }
+      creatorsList = creatorsListSelected;
     }
 
     res.write("step: generate-campaign\n");
-    const result = await searchRelevantCreators(res, creators, {
+    const result = await searchRelevantCreators(res, creatorsList, {
       category,
       objective,
       product,
@@ -92,9 +123,9 @@ export const createCampaign = tryCatchController(
     newCampaign.user = {
       id: req.user.id,
     } as UserEntity;
-    newCampaign.country = country;
+    newCampaign.country = country || null;
     newCampaign.industry = industry || null;
-    newCampaign.category = category;
+    newCampaign.category = category || null;
     newCampaign.objective = objective;
     newCampaign.product = product;
     newCampaign.targetAudience = targetAudience;

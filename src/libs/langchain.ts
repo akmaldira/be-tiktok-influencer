@@ -50,7 +50,7 @@ export const searchRelevantCreators = async (
   }: {
     objective: string;
     product: string;
-    category: string;
+    category: string | undefined;
     targetAudience: string;
     timeline: string;
     industry: string | undefined;
@@ -98,7 +98,7 @@ Question: {input}`);
     input: `Buatkan saya campaign plan untuk produk susu anak yang bertujuan untuk meningkatkan engagement. Berikut adalah detail campaign plan yang saya butuhkan:
     Objective : ${objective}
     Produk : ${product}
-    Kategori : ${category}
+    ${category ? `Kategori : ${category}` : ""}
     Target Audience : ${targetAudience}
     Timeline : ${k} Minggu
     ${industry ? `Industri : ${industry}` : ""}

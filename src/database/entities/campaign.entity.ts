@@ -15,14 +15,14 @@ export default class CampaignEntity extends TrackedEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: "varchar", length: 255, name: "country" })
-  country: string;
+  @Column({ type: "varchar", length: 255, name: "country", nullable: true })
+  country: string | null;
 
   @Column({ type: "varchar", length: 255, name: "industry", nullable: true })
   industry: string | null;
 
-  @Column({ type: "varchar", length: 255, name: "category" })
-  category: string;
+  @Column({ type: "varchar", length: 255, name: "category", nullable: true })
+  category: string | null;
 
   @Column({ type: "enum", enum: Objective, name: "objective" })
   objective: Objective;

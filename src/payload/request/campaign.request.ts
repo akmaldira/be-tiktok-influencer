@@ -1,5 +1,6 @@
 import { Objective, Timeline } from "database/entities/enum";
 import {
+  array,
   enum_,
   minLength,
   number,
@@ -10,9 +11,9 @@ import {
 } from "valibot";
 
 export const createCampaignBodySpec = object({
-  country: string("Country must be string"),
+  country: optional(string("Country must be string")),
   industry: optional(string("Industry must be string")),
-  category: string("Category must be string"),
+  category: optional(string("Category must be string")),
   objective: enum_(
     Objective,
     "Objective must be one of SALES, ENGAGEMENT, AWARENESS",
@@ -33,5 +34,8 @@ export const createCampaignBodySpec = object({
       (input) => parseInt(input),
       number("Influencer count must be number"),
     ),
+  ),
+  creators: optional(
+    array(object({ id: string("Creator id must be string") })),
   ),
 });
