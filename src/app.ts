@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import errorMiddleware from "middlewares/error.middleware";
 import "reflect-metadata";
+import analysisRoute from "routes/analysis.route";
 import authRoute from "routes/auth.route";
 import campaignRoute from "routes/campaign.route";
 import creatorRoute from "routes/creator.route";
@@ -20,6 +21,7 @@ app.use("/api/auth", authRoute);
 app.use("/api/creator", creatorRoute);
 app.use("/api/campaign", campaignRoute);
 app.use("/api/feedback", feedBackRoute);
+app.use("/api/analysis", analysisRoute);
 app.get("*", (req, res) => {
   res.sendFile("index.html", { root: "public" });
 });

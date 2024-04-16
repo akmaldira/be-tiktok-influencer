@@ -5,6 +5,7 @@ import {
   PrimaryGeneratedColumn,
   Relation,
 } from "typeorm";
+import VideoAnalysisEntity from "./analysis.entity";
 import CampaignEntity from "./campaign.entity";
 import { Provider, UserRole } from "./enum";
 import TrackedEntity from "./tracked.entity";
@@ -34,4 +35,7 @@ export default class UserEntity extends TrackedEntity {
 
   @OneToMany(() => CampaignEntity, (campaign) => campaign.user)
   campaigns: Relation<CampaignEntity[]>;
+
+  @OneToMany(() => VideoAnalysisEntity, (videoAnalysis) => videoAnalysis.user)
+  videoAnalyses: Relation<VideoAnalysisEntity[]>;
 }
