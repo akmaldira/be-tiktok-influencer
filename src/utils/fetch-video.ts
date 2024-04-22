@@ -17,6 +17,7 @@ export const fetchVideo = async (
   comment: number;
   view: number;
   collect: number;
+  engagementRate: number;
 }> => {
   const response = await axios.get(videoUrl);
   const data = response.data;
@@ -36,6 +37,16 @@ export const fetchVideo = async (
   const jsonData = JSON.parse(match[2]) as any;
   const videoDetailJsonData =
     jsonData["__DEFAULT_SCOPE__"]["webapp.video-detail"];
+  if (videoDetailJsonData.statusCode !== 0) {
+    if (videoDetailJsonData.statusCode === 10204) {
+      throw new Error(`Video ${videoUrl} was not found`);
+    } else {
+      throw new Error(
+        `Cannot fetch video detail because ${videoDetailJsonData.statusMsg}, please try again later...`,
+      );
+    }
+  }
+
   const videoDetail = videoDetailJsonData?.itemInfo?.itemStruct as
     | TiktokCreatorVideo
     | undefined;
@@ -44,7 +55,25 @@ export const fetchVideo = async (
       `Cannot find video detail in JSON, please contact support...`,
     );
   }
-  return getStats(videoDetail);
+
+  let engagementRate = 0;
+  const stats = getStats(videoDetail);
+  if (
+    stats.like == 0 ||
+    stats.comment == 0 ||
+    stats.share == 0 ||
+    stats.view == 0
+  ) {
+    engagementRate = 0;
+  } else {
+    engagementRate =
+      ((stats.like + stats.comment + stats.share) / stats.view) * 100;
+  }
+
+  return {
+    ...stats,
+    engagementRate,
+  };
 };
 
 export const getStats = ({ stats, statsV2 }: { stats: any; statsV2: any }) => {

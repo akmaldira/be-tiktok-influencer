@@ -6,11 +6,11 @@ import {
   PrimaryGeneratedColumn,
   Relation,
 } from "typeorm";
+import CampaignAnalysisEntity from "./campaign-analysis.entity";
 import TrackedEntity from "./tracked.entity";
-import UserEntity from "./user.entity";
 
-@Entity({ name: "tbl_video_analysis" })
-export default class VideoAnalysisEntity extends TrackedEntity {
+@Entity({ name: "tbl_campaign_analysis_detail" })
+export default class CampaignAnalysisDetailEntity extends TrackedEntity {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
@@ -32,12 +32,19 @@ export default class VideoAnalysisEntity extends TrackedEntity {
   @Column({ name: "collect_count", type: "bigint" })
   collectCount: number;
 
+  @Column({ name: "engagement_rate", type: "decimal" })
+  engagementRate: number;
+
+  @Column({ name: "cost", type: "bigint", nullable: true })
+  cost: number | null;
+
   @Column({ name: "old_data", type: "text", nullable: true })
   oldData: string | null;
 
-  @ManyToOne(() => UserEntity, (user) => user.videoAnalyses, {
-    nullable: false,
-  })
-  @JoinColumn({ name: "user_id" })
-  user: Relation<UserEntity>;
+  @ManyToOne(
+    () => CampaignAnalysisEntity,
+    (campaignAnalysis) => campaignAnalysis.details,
+  )
+  @JoinColumn({ name: "campaign_analysis_id" })
+  campaignAnalysis: Relation<CampaignAnalysisEntity>;
 }

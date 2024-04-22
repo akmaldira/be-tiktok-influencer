@@ -1,15 +1,19 @@
-import VideoAnalysisEntity from "database/entities/analysis.entity";
+import CampaignAnalysisEntity from "database/entities/campaign-analysis.entity";
 
-export const analysisResponseSpec = (analysis: VideoAnalysisEntity) => {
+export const analysisResponseSpec = (analysis: CampaignAnalysisEntity) => {
   return {
     id: analysis.id,
-    videoUrl: analysis.videoUrl,
-    likeCount: Number(analysis.likeCount),
-    commentCount: Number(analysis.commentCount),
-    shareCount: Number(analysis.shareCount),
-    viewCount: Number(analysis.viewCount),
-    collectCount: Number(analysis.collectCount),
-    oldData: analysis.oldData ? JSON.parse(analysis.oldData) : [],
+    campaignName: analysis.campaignName,
+    details: analysis.details.map((detail) => ({
+      likeCount: Number(detail.likeCount),
+      commentCount: Number(detail.commentCount),
+      shareCount: Number(detail.shareCount),
+      viewCount: Number(detail.viewCount),
+      collectCount: Number(detail.collectCount),
+      cost: detail.cost ? Number(detail.cost) : null,
+      engagementRate: Number(Number(detail.engagementRate).toFixed(2)),
+      oldData: detail.oldData ? JSON.parse(detail.oldData) : [],
+    })),
     createdAt: analysis.createdAt,
     updatedAt: analysis.updatedAt,
   };
